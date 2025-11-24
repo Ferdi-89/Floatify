@@ -1,0 +1,436 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { useAuth } from './auth/AuthContext';
+import Player from './components/Player';
+import Lyrics from './components/Lyrics';
+import SettingsModal from './components/SettingsModal';
+import useSpotifyCurrentTrack from './components/useSpotifyCurrentTrack';
+import useDocumentPiP from './components/useDocumentPiP';
+import { Settings, ExternalLink, Minimize2, LogOut, Maximize2 } from 'lucide-react';
+import { FastAverageColor } from 'fast-average-color';
+
+const fac = new FastAverageColor();
+
+function App() {
+  const { token, login, logout } = useAuth();
+  const { currentTrack, progress, isPlaying } = useSpotifyCurrentTrack(token, logout);
+  const [isMini, setIsMini] = useState(false);
+  const { pipWindow, requestPiP, closePiP } = useDocumentPiP();
+
+  // Settings State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settings, setSettings] = useState({
+    themeColor: '#1db954',
+    lyricsSize: '1.5rem',
+    lyricsAlign: 'left',
+    dynamicBackground: false
+  });
+
+  // Dynamic Background State
+  const [bgColor, setBgColor] = useState('#09090b');
+
+  // Apply theme color
+  useEffect(() => {
+    document.documentElement.style.setProperty('--color-primary', settings.themeColor);
+  }, [settings.themeColor]);
+
+  // Handle Dynamic Background
+  useEffect(() => {
+    if (settings.dynamicBackground && currentTrack?.album?.images[0]?.url) {
+      const imageUrl = currentTrack.album.images[0].url;
+
+      // Create a temporary image to extract color
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.src = imageUrl;
+
+      img.onload = () => {
+        try {
+          const color = fac.getColor(img);
+          // Darken the color to ensure text readability
+          // We mix it with black (0.8 factor)
+          const r = Math.floor(color.value[0] * 0.2);
+          const g = Math.floor(color.value[1] * 0.2);
+          const b = Math.floor(color.value[2] * 0.2);
+          setBgColor(`rgb(${r}, ${g}, ${b})`);
+        } catch (e) {
+          console.error("Error extracting color", e);
+          setBgColor('#09090b');
+        }
+      };
+    } else {
+      setBgColor('#09090b');
+    }
+  }, [settings.dynamicBackground, currentTrack?.album?.images]);
+
+  // Apply background color
+  useEffect(() => {
+    document.documentElement.style.setProperty('--color-background', bgColor);
+    // Also update surface colors to be slightly lighter than background
+    // This is a simple approximation
+    document.documentElement.style.setProperty('--color-surface', `color-mix(in srgb, ${bgColor}, white 5%)`);
+    document.documentElement.style.setProperty('--color-surface-hover', `color-mix(in srgb, ${bgColor}, white 10%)`);
+  }, [bgColor]);
+
+  const updateSettings = (key, value) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleControl = async (command) => {
+    if (!token) return;
+
+    let endpoint = '';
+    let method = 'POST';
+
+    switch (command) {
+      case 'next':
+        endpoint = 'https://api.spotify.com/v1/me/player/next';
+        break;
+      case 'previous':
+        endpoint = 'https://api.spotify.com/v1/me/player/previous';
+        break;
+      case 'play':
+        endpoint = 'https://api.spotify.com/v1/me/player/play';
+        method = 'PUT';
+        break;
+      case 'pause':
+        endpoint = 'https://api.spotify.com/v1/me/player/pause';
+        method = 'PUT';
+        break;
+      default:
+        return;
+    }
+
+    try {
+      const response = await fetch(endpoint, {
+        method: method,
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.status === 403) {
+        alert("Maaf, fitur kontrol (Play/Pause/Next) hanya tersedia untuk akun Spotify Premium.");
+      }
+    } catch (error) {
+      console.error("Error controlling playback:", error);
+    }
+  };
+
+  const togglePiP = () => {
+    if (pipWindow) {
+      closePiP();
+    } else {
+      requestPiP(350, 500);
+    }
+  };
+
+  // Content for both Main Window and PiP Window
+  const PlayerContent = (
+    <main style={{
+      display: 'flex',
+      flexDirection: 'column',
+      flex: 1,
+      overflow: 'hidden',
+      height: '100%',
+      position: 'relative'
+    }}>
+      {(isMini || pipWindow) ? (
+        <>
+          {/* Top Bar: Track Info (Album Art + Text) */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            padding: '16px',
+            background: 'transparent', // No dark shadow
+            zIndex: 20,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <img
+              src={currentTrack?.album.images[0]?.url}
+              alt="Album Art"
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: 'var(--border-radius-sm)',
+                objectFit: 'cover'
+              }}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <span style={{ fontWeight: '700', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {currentTrack?.name}
+              </span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {currentTrack?.artists.map(a => a.name).join(', ')}
+              </span>
+            </div>
+          </div>
+
+          {/* Mini/PiP Layout: Lyrics fill screen */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            overflowY: 'auto',
+            scrollbarWidth: 'none',
+            zIndex: 1,
+            paddingTop: '60px', // Space for top bar
+            paddingBottom: '100px' // Space for floating player
+          }}>
+            <Lyrics
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+              progress={progress}
+              isMini={true}
+              settings={settings}
+            />
+          </div>
+
+          {/* Floating Player Bar (Controls Only) */}
+          <div style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10
+          }}>
+            <div className="glass-panel" style={{
+              borderRadius: 'var(--border-radius-full)',
+              padding: '8px 24px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              border: '1px solid var(--glass-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(24, 24, 27, 0.95)'
+            }}>
+              <Player
+                currentTrack={currentTrack}
+                isPlaying={isPlaying}
+                isMini={true}
+                onControl={handleControl}
+                showInfo={false} // Hide info in the bottom bar
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Main Window Layout: Lyrics fill screen, Player at bottom */}
+          <div style={{
+            flex: 1,
+            minHeight: 0,
+            overflow: 'hidden', // Hidden for proper scroll behavior
+            position: 'relative'
+          }}>
+            <Lyrics
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+              progress={progress}
+              isMini={false}
+              settings={settings}
+            />
+          </div>
+
+          {/* Player at Bottom */}
+          <div style={{
+            padding: 'var(--spacing-md)',
+            borderTop: '1px solid var(--color-border)'
+          }}>
+            <Player
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+              isMini={false}
+              onControl={handleControl}
+              showInfo={true}
+            />
+          </div>
+        </>
+      )}
+    </main>
+  );
+
+  return (
+    <div className="app-container" style={{
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      backgroundColor: 'var(--color-background)',
+      color: 'var(--color-text-primary)',
+      overflow: 'hidden',
+      transition: 'background-color 0.5s ease' // Smooth background transition
+    }}>
+      {/* Header (Only in Main Window, Non-Mini Mode) */}
+      {!isMini && !pipWindow && (
+        <header style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: 'var(--spacing-md) var(--spacing-lg)',
+          borderBottom: '1px solid var(--color-border)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-primary)' }}></div>
+            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Floatify</h1>
+          </div>
+
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+            {token && (
+              <>
+                <button onClick={() => setIsSettingsOpen(true)} title="Settings" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                  <Settings size={20} />
+                </button>
+                <button onClick={togglePiP} title={pipWindow ? "Close Pop-out" : "Pop-out Player"} style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                  <ExternalLink size={20} />
+                </button>
+                <button onClick={() => setIsMini(true)} title="Mini Mode" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                  <Minimize2 size={20} />
+                </button>
+                <div style={{ width: '1px', height: '24px', background: 'var(--color-border)', margin: '0 var(--spacing-xs)' }}></div>
+                <button onClick={logout} title="Logout" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                  <LogOut size={20} />
+                </button>
+              </>
+            )}
+          </div>
+        </header>
+      )}
+
+      {/* Mini Mode Exit Button */}
+      {isMini && !pipWindow && (
+        <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 50 }}>
+          <button
+            onClick={() => setIsMini(false)}
+            className="glass-panel"
+            style={{
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-text-primary)',
+              background: 'rgba(0,0,0,0.5)'
+            }}
+          >
+            <Maximize2 size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Main Content Area */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        padding: 'var(--spacing-lg)', // Consistent padding for all modes
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {!token ? (
+          <div className="login-container" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, gap: 'var(--spacing-lg)' }}>
+            <h2 style={{ fontSize: '2rem', fontWeight: '800', textAlign: 'center' }}>Music that floats<br />with you.</h2>
+            <button
+              onClick={login}
+              style={{
+                backgroundColor: 'var(--color-primary)',
+                color: 'black',
+                padding: '14px 32px',
+                borderRadius: 'var(--border-radius-full)',
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                boxShadow: '0 4px 20px rgba(29, 185, 84, 0.3)',
+                transform: 'scale(1)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              Login with Spotify
+            </button>
+          </div>
+        ) : (
+          <>
+            {pipWindow ? (
+              createPortal(
+                <div style={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  backgroundColor: 'var(--color-background)',
+                  color: 'var(--color-text-primary)',
+                  fontFamily: 'var(--font-family, sans-serif)' // Ensure font carries over
+                }}>
+                  {/* Inject CSS variables into PiP window */}
+                  <style>{`
+                    :root {
+                      --color-background: ${bgColor};
+                      --color-surface: color-mix(in srgb, ${bgColor}, white 5%);
+                      --color-surface-hover: color-mix(in srgb, ${bgColor}, white 10%);
+                      --color-primary: ${settings.themeColor};
+                      --color-text-primary: #ffffff;
+                      --color-text-secondary: #a1a1aa;
+                      --color-text-muted: #71717a;
+                      --glass-background: #18181b;
+                      --glass-border: rgba(255, 255, 255, 0.08);
+                      --glass-blur: 0px;
+                      --spacing-sm: 8px;
+                      --spacing-md: 16px;
+                      --spacing-lg: 24px;
+                      --spacing-xl: 32px;
+                      --spacing-2xl: 48px;
+                      --border-radius-sm: 6px;
+                    }
+                    html, body { height: 100%; margin: 0; overflow: hidden; background: var(--color-background); color: var(--color-text-primary); }
+                    ::-webkit-scrollbar { width: 4px; }
+                    ::-webkit-scrollbar-thumb { background: var(--color-surface-hover); border-radius: 4px; }
+                    .glass-panel { background: rgba(24, 24, 27, 0.95); border: 1px solid var(--glass-border); }
+                  `}</style>
+                  {PlayerContent}
+                </div>,
+                pipWindow.document.body
+              )
+            ) : (
+              PlayerContent
+            )}
+
+            {pipWindow && (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)', gap: 'var(--spacing-md)' }}>
+                <ExternalLink size={48} style={{ opacity: 0.5 }} />
+                <p>Playing in Pop-out Window</p>
+                <button
+                  onClick={closePiP}
+                  style={{
+                    padding: '8px 16px',
+                    background: 'var(--color-surface)',
+                    borderRadius: 'var(--border-radius-full)',
+                    color: 'var(--color-text-primary)',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  Restore Player
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        settings={settings}
+        updateSettings={updateSettings}
+      />
+    </div>
+  );
+}
+
+export default App;
