@@ -16,6 +16,15 @@ function App() {
   const { currentTrack, progress, isPlaying } = useSpotifyCurrentTrack(token, logout);
   const [isMini, setIsMini] = useState(false);
   const { pipWindow, requestPiP, closePiP } = useDocumentPiP();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -222,35 +231,105 @@ function App() {
         </>
       ) : (
         <>
-          {/* Main Window Layout: Lyrics fill screen, Player at bottom */}
-          <div style={{
-            flex: 1,
-            minHeight: 0,
-            overflow: 'hidden', // Hidden for proper scroll behavior
-            position: 'relative'
-          }}>
-            <Lyrics
-              currentTrack={currentTrack}
-              isPlaying={isPlaying}
-              progress={progress}
-              isMini={false}
-              settings={settings}
-            />
-          </div>
+          {/* Main Window Layout */}
+          {isMobile ? (
+            /* Mobile Layout: Info Top, Lyrics Middle, Controls Bottom */
+            <>
+              {/* Mobile Top Bar: Track Info */}
+              <div style={{
+                padding: 'var(--spacing-md)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-md)',
+                zIndex: 10,
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)' // Legibility gradient
+              }}>
+                <img
+                  src={currentTrack?.album.images[0]?.url}
+                  alt="Album Art"
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: 'var(--border-radius-sm)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    objectFit: 'cover'
+                  }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <span style={{ fontWeight: '700', fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {currentTrack?.name}
+                  </span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {currentTrack?.artists.map(a => a.name).join(', ')}
+                  </span>
+                </div>
+              </div>
 
-          {/* Player at Bottom */}
-          <div style={{
-            padding: 'var(--spacing-md)',
-            borderTop: '1px solid var(--color-border)'
-          }}>
-            <Player
-              currentTrack={currentTrack}
-              isPlaying={isPlaying}
-              isMini={false}
-              onControl={handleControl}
-              showInfo={true}
-            />
-          </div>
+              {/* Lyrics Area */}
+              <div style={{
+                flex: 1,
+                minHeight: 0,
+                overflow: 'hidden',
+                position: 'relative'
+              }}>
+                <Lyrics
+                  currentTrack={currentTrack}
+                  isPlaying={isPlaying}
+                  progress={progress}
+                  isMini={false}
+                  settings={settings}
+                />
+              </div>
+
+              {/* Mobile Bottom Bar: Controls Only */}
+              <div style={{
+                padding: 'var(--spacing-md)',
+                paddingBottom: 'var(--spacing-xl)', // Extra padding for mobile bottom nav area
+                display: 'flex',
+                justifyContent: 'center'
+              }}>
+                <Player
+                  currentTrack={currentTrack}
+                  isPlaying={isPlaying}
+                  isMini={false}
+                  onControl={handleControl}
+                  showInfo={false} // Hide info, show only controls
+                />
+              </div>
+            </>
+          ) : (
+            /* Desktop Layout: Lyrics Fill, Player Bottom with Info */
+            <>
+              <div style={{
+                flex: 1,
+                minHeight: 0,
+                overflow: 'hidden', // Hidden for proper scroll behavior
+                position: 'relative'
+              }}>
+                <Lyrics
+                  currentTrack={currentTrack}
+                  isPlaying={isPlaying}
+                  progress={progress}
+                  isMini={false}
+                  settings={settings}
+                />
+              </div>
+
+              {/* Player at Bottom */}
+              <div style={{
+                padding: 'var(--spacing-md)',
+                borderTop: '1px solid var(--color-border)'
+              }}>
+                <Player
+                  currentTrack={currentTrack}
+                  isPlaying={isPlaying}
+                  isMini={false}
+                  onControl={handleControl}
+                  showInfo={true}
+                />
+              </div>
+            </>
+          )}
         </>
       )}
     </main>
