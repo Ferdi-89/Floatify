@@ -242,7 +242,7 @@ function App() {
                 alignItems: 'center',
                 gap: 'var(--spacing-md)',
                 zIndex: 10,
-                background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)' // Legibility gradient
+                background: 'transparent' // Removed dark gradient shadow
               }}>
                 <img
                   src={currentTrack?.album.images[0]?.url}
@@ -351,30 +351,37 @@ function App() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: 'var(--spacing-md) var(--spacing-lg)',
+          padding: isMobile ? '12px 16px' : 'var(--spacing-md) var(--spacing-lg)', // Reduced padding on mobile
           borderBottom: '1px solid var(--color-border)',
           position: 'relative',
           zIndex: 50,
-          background: 'var(--color-background)' // Ensure background is opaque
+          background: 'var(--color-background)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-primary)' }}></div>
-            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Floatify</h1>
+            <h1 style={{ margin: 0, fontSize: isMobile ? '1.1rem' : '1.25rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Floatify</h1>
           </div>
 
-          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+          <div style={{ display: 'flex', gap: isMobile ? '4px' : 'var(--spacing-sm)' }}>
             {token && (
               <>
                 <button onClick={() => setIsSettingsOpen(true)} title="Settings" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   <Settings size={20} />
                 </button>
-                <button onClick={togglePiP} title={pipWindow ? "Close Pop-out" : "Pop-out Player"} style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
-                  <ExternalLink size={20} />
-                </button>
+
+                {/* Hide Pop-out on Mobile (Not supported & saves space) */}
+                {!isMobile && (
+                  <button onClick={togglePiP} title={pipWindow ? "Close Pop-out" : "Pop-out Player"} style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                    <ExternalLink size={20} />
+                  </button>
+                )}
+
                 <button onClick={() => setIsMini(true)} title="Mini Mode" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   <Minimize2 size={20} />
                 </button>
+
                 <div style={{ width: '1px', height: '24px', background: 'var(--color-border)', margin: '0 var(--spacing-xs)' }}></div>
+
                 <button onClick={logout} title="Logout" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   <LogOut size={20} />
                 </button>
