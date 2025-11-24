@@ -351,31 +351,41 @@ function App() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: isMobile ? '12px 16px' : 'var(--spacing-md) var(--spacing-lg)', // Reduced padding on mobile
+          padding: isMobile ? '10px 16px' : 'var(--spacing-md) var(--spacing-lg)',
           borderBottom: '1px solid var(--color-border)',
           position: 'relative',
           zIndex: 50,
           background: 'var(--color-background)',
-          flexShrink: 0 // Prevent header from shrinking
+          flexShrink: 0
         }}>
+          {/* Mobile CSS Overrides */}
+          <style>{`
+            @media (max-width: 768px) {
+              .desktop-only { display: none !important; }
+            }
+          `}</style>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-primary)' }}></div>
-            <h1 style={{ margin: 0, fontSize: isMobile ? '1.1rem' : '1.25rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Floatify</h1>
+            <h1 style={{ margin: 0, fontSize: isMobile ? '1rem' : '1.25rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Floatify</h1>
           </div>
 
-          <div style={{ display: 'flex', gap: isMobile ? '8px' : 'var(--spacing-sm)' }}>
+          <div style={{ display: 'flex', gap: isMobile ? '4px' : 'var(--spacing-sm)' }}>
             {token && (
               <>
                 <button onClick={() => setIsSettingsOpen(true)} title="Settings" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   <Settings size={20} />
                 </button>
 
-                {/* Hide Pop-out on Mobile (Not supported & saves space) */}
-                {!isMobile && (
-                  <button onClick={togglePiP} title={pipWindow ? "Close Pop-out" : "Pop-out Player"} style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
-                    <ExternalLink size={20} />
-                  </button>
-                )}
+                {/* Pop-out Button - Hidden on Mobile via CSS & JS */}
+                <button
+                  onClick={togglePiP}
+                  title={pipWindow ? "Close Pop-out" : "Pop-out Player"}
+                  className="desktop-only"
+                  style={{ padding: '8px', color: 'var(--color-text-secondary)' }}
+                >
+                  <ExternalLink size={20} />
+                </button>
 
                 <button onClick={() => setIsMini(true)} title="Mini Mode" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   <Minimize2 size={20} />
