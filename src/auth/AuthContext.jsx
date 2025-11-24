@@ -60,7 +60,14 @@ export const AuthProvider = ({ children }) => {
   const login = async () => {
     const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID?.trim();
     const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI?.trim();
-    const SCOPES = import.meta.env.VITE_SPOTIFY_SCOPES?.trim();
+
+    // Default valid scopes - fallback if env var not set
+    const DEFAULT_SCOPES = 'user-read-private user-read-email user-read-playback-state user-modify-playback-state user-read-currently-playing streaming';
+    const SCOPES = import.meta.env.VITE_SPOTIFY_SCOPES?.trim() || DEFAULT_SCOPES;
+
+    console.log('🔍 Debug - CLIENT_ID:', CLIENT_ID ? 'SET' : 'MISSING');
+    console.log('🔍 Debug - REDIRECT_URI:', REDIRECT_URI);
+    console.log('🔍 Debug - SCOPES:', SCOPES);
 
     const generateRandomString = (length) => {
       let text = '';
@@ -93,6 +100,8 @@ export const AuthProvider = ({ children }) => {
       code_challenge_method: 'S256',
       code_challenge: challenge,
     });
+
+    console.log('🔗 Authorization URL:', `https://accounts.spotify.com/authorize?${params.toString()}`);
 
     document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
   };
