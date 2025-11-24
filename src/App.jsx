@@ -337,13 +337,13 @@ function App() {
 
   return (
     <div className="app-container" style={{
-      height: '100vh',
+      height: '100dvh', // Use dynamic viewport height for mobile
       display: 'flex',
       flexDirection: 'column',
       backgroundColor: 'var(--color-background)',
       color: 'var(--color-text-primary)',
       overflow: 'hidden',
-      transition: 'background-color 0.5s ease' // Smooth background transition
+      transition: 'background-color 0.5s ease'
     }}>
       {/* Header (Only in Main Window, Non-Mini Mode) */}
       {!isMini && !pipWindow && (
@@ -353,8 +353,9 @@ function App() {
           alignItems: 'center',
           padding: 'var(--spacing-md) var(--spacing-lg)',
           borderBottom: '1px solid var(--color-border)',
-          position: 'relative', // Ensure it stacks correctly
-          zIndex: 50 // Ensure it's above other content
+          position: 'relative',
+          zIndex: 50,
+          background: 'var(--color-background)' // Ensure background is opaque
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-primary)' }}></div>
@@ -367,17 +368,12 @@ function App() {
                 <button onClick={() => setIsSettingsOpen(true)} title="Settings" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   <Settings size={20} />
                 </button>
-                {/* Hide PiP and Mini Mode buttons on Mobile since they are desktop features */}
-                {!isMobile && (
-                  <>
-                    <button onClick={togglePiP} title={pipWindow ? "Close Pop-out" : "Pop-out Player"} style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
-                      <ExternalLink size={20} />
-                    </button>
-                    <button onClick={() => setIsMini(true)} title="Mini Mode" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
-                      <Minimize2 size={20} />
-                    </button>
-                  </>
-                )}
+                <button onClick={togglePiP} title={pipWindow ? "Close Pop-out" : "Pop-out Player"} style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                  <ExternalLink size={20} />
+                </button>
+                <button onClick={() => setIsMini(true)} title="Mini Mode" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                  <Minimize2 size={20} />
+                </button>
                 <div style={{ width: '1px', height: '24px', background: 'var(--color-border)', margin: '0 var(--spacing-xs)' }}></div>
                 <button onClick={logout} title="Logout" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   <LogOut size={20} />
@@ -415,7 +411,7 @@ function App() {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        padding: 'var(--spacing-lg)', // Consistent padding for all modes
+        padding: isMobile ? '0' : 'var(--spacing-lg)', // Remove padding on mobile to prevent layout issues
         position: 'relative',
         overflow: 'hidden'
       }}>
