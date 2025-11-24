@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import useLyrics from './useLyrics';
 import { Loader2, Music } from 'lucide-react';
 
@@ -6,6 +6,15 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
     const lyricsContainerRef = useRef(null);
     const activeLineRef = useRef(null);
     const prevActiveIndexRef = useRef(null);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Default settings if not provided
     const { lyricsSize = '2.25rem', lyricsAlign = 'left' } = settings || {};
@@ -41,13 +50,15 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
     // Force margin to be applied when mode changes
     useEffect(() => {
         console.log('🎵 Mode changed to:', isMini ? 'MINI' : 'MAIN WINDOW');
+        console.log('📱 Mobile check:', isMobile);
 
         // Use only marginLeft (no transform to avoid double offset)
         if (lyricsContainerRef.current) {
-            lyricsContainerRef.current.style.marginLeft = isMini ? '0' : '200px';
-            console.log('🎵 Applied marginLeft:', isMini ? '0' : '200px');
+            // Reset margin for mobile or mini mode
+            lyricsContainerRef.current.style.marginLeft = (isMini || isMobile) ? '0' : '200px';
+            console.log('🎵 Applied marginLeft:', (isMini || isMobile) ? '0' : '200px');
         }
-    }, [isMini]);
+    }, [isMini, isMobile]);
 
     if (!currentTrack) return null;
 
@@ -110,7 +121,22 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 linePaddingRight: 'var(--spacing-sm)'
             };
         } else {
-            // Main Window: LARGE FONT with balanced spacing
+            // Main Window logic
+            if (isMobile) {
+                // Mobile View (Responsive)
+                return {
+                    fontSize: `${2 * sizeScale}rem`, // Smaller font for mobile
+                    spacing: 'var(--spacing-2xl)',   // Reduced spacing
+                    activeScale: 1.05,
+                    blurStrength: 1,
+                    fontWeight: '700',
+                    linePaddingTop: '20px',
+                    linePaddingBottom: '20px',
+                    linePaddingRight: 'var(--spacing-md)'
+                };
+            }
+
+            // Desktop Main Window: LARGE FONT with balanced spacing
             return {
                 fontSize: `${3.5 * sizeScale}rem`,
                 spacing: 'var(--spacing-4_5xl)', // 300px vertical gap
@@ -131,10 +157,10 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
             key={`lyrics-${isMini ? 'mini' : 'main'}`}
             ref={lyricsContainerRef}
             style={{
-                padding: isMini ? 'var(--spacing-xl)' : 'var(--spacing-2xl)',
+                padding: isMini || isMobile ? 'var(--spacing-xl)' : 'var(--spacing-2xl)',
                 paddingBottom: '50vh',
                 height: '100%',
-                marginLeft: isMini ? '0' : '200px', // 200px left margin for Main Window
+                marginLeft: (isMini || isMobile) ? '0' : '200px', // 0 margin for mobile/mini
                 overflowY: 'auto',
                 textAlign: lyricsAlign,
                 maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
