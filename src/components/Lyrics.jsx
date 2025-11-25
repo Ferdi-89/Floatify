@@ -123,19 +123,15 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
             // Main Window logic
             if (isMobile) {
                 // Mobile View (Responsive)
-                // Desktop Main Window: LARGE FONT with balanced spacing
                 return {
-                    fontSize: `${3.5 * sizeScale}rem`,
-                    spacing: 'var(--spacing-4_5xl)', // 300px vertical gap
+                    fontSize: `${2 * sizeScale}rem`, // Smaller font for mobile
+                    spacing: 'var(--spacing-2xl)',   // Reduced spacing
                     activeScale: 1.05,
-                    blurStrength: 2,
+                    blurStrength: 0, // Disable blur on mobile for performance
                     fontWeight: '700',
-                    linePaddingTop: '50px',
-                    linePaddingBottom: '50px',
-                    // Balance padding for center, or use small padding for left/right align
-                    linePaddingRight: isCenter ? '10vw' : '10vw',
-                    linePaddingLeft: isCenter ? '10vw' : 'var(--spacing-sm)',
-                    marginLeft: isCenter ? '0' : '5vw' // Reduced margin to prevent truncation
+                    linePaddingBottom: '20px',
+                    linePaddingRight: 'var(--spacing-md)',
+                    marginLeft: '0'
                 };
             }
 
@@ -215,7 +211,8 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                                 settings?.fontFamily === 'Serif' ? 'Lora, serif' :
                                     settings?.fontFamily === 'JetBrains Mono' ? '"JetBrains Mono", monospace' :
                                         settings?.fontFamily === 'Lora' ? 'Lora, serif' :
-                                            settings?.fontFamily || 'inherit',
+                                            settings?.fontFamily === 'Poppins' ? 'Poppins, sans-serif' :
+                                                settings?.fontFamily || 'inherit',
                             fontStyle: settings?.fontStyle || 'normal',
                             margin: `${styles.spacing} 0`,
                             paddingTop: styles.linePaddingTop,

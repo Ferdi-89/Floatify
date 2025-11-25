@@ -226,7 +226,7 @@ function SettingsModal({ isOpen, onClose, settings, updateSettings }) {
                 <div style={{ marginBottom: 'var(--spacing-lg)' }}>
                     <label style={{ display: 'block', marginBottom: 'var(--spacing-sm)', color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Font Family</label>
                     <div style={{ display: 'flex', gap: 'var(--spacing-xs)', background: 'var(--color-surface)', padding: '4px', borderRadius: 'var(--border-radius-md)', overflowX: 'auto' }}>
-                        {['Inter', 'Roboto', 'Lora', 'JetBrains Mono'].map((font) => (
+                        {['Inter', 'Poppins', 'Lora', 'JetBrains Mono'].map((font) => (
                             <button
                                 key={font}
                                 onClick={() => updateSettings('fontFamily', font)}
