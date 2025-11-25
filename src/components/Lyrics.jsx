@@ -115,6 +115,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
     // Determine base size and spacing based on mode (Main vs Mini)
     const getBaseStyles = () => {
         const sizeScale = settings?.lyricsSize === '1rem' ? 0.8 : settings?.lyricsSize === '2rem' ? 1.3 : 1;
+        const isCenter = lyricsAlign === 'center';
 
         if (isMini) {
             // Pop-out / Mini Mode
@@ -126,7 +127,8 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 fontWeight: '700',
                 linePaddingTop: '0',
                 linePaddingBottom: '0',
-                linePaddingRight: 'var(--spacing-sm)'
+                linePaddingRight: 'var(--spacing-sm)',
+                marginLeft: '0'
             };
         } else {
             // Main Window logic
@@ -140,7 +142,8 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                     fontWeight: '700',
                     linePaddingTop: '20px',
                     linePaddingBottom: '20px',
-                    linePaddingRight: 'var(--spacing-md)'
+                    linePaddingRight: 'var(--spacing-md)',
+                    marginLeft: '0'
                 };
             }
 
@@ -153,7 +156,8 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 fontWeight: '700',
                 linePaddingTop: '50px',
                 linePaddingBottom: '50px',
-                linePaddingRight: 'var(--spacing-4_5xl)' // 300px right padding
+                linePaddingRight: isCenter ? 'var(--spacing-2xl)' : 'var(--spacing-4_5xl)', // Balanced padding for center
+                marginLeft: isCenter ? '0' : '200px' // Remove margin for center
             };
         }
     };
@@ -169,7 +173,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 paddingTop: '50vh', // Center first line vertically
                 paddingBottom: '50vh',
                 height: '100%',
-                marginLeft: (isMini || isMobile) ? '0' : '200px', // 0 margin for mobile/mini
+                marginLeft: styles.marginLeft, // Dynamic margin
                 overflowY: 'auto',
                 textAlign: lyricsAlign,
                 maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',

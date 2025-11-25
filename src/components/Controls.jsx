@@ -23,19 +23,20 @@ function Controls({ isPlaying, onControl, size = 'medium' }) {
                     height: playSize,
                     borderRadius: '50%',
                     backgroundColor: 'var(--color-text-primary)',
-                    color: 'black',
+                    color: 'var(--color-background)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    transition: 'transform 0.1s ease'
+                    transition: 'transform 0.1s ease',
+                    border: 'none'
                 }}
                 className="play-btn"
                 title={isPlaying ? "Pause" : "Play"}
             >
                 {isPlaying ? (
-                    <Pause size={iconSize} fill="black" />
+                    <Pause size={iconSize} fill="currentColor" />
                 ) : (
-                    <Play size={iconSize} fill="black" style={{ marginLeft: '2px' }} />
+                    <Play size={iconSize} fill="currentColor" style={{ marginLeft: '2px' }} />
                 )}
             </button>
 
@@ -55,7 +56,7 @@ function Controls({ isPlaying, onControl, size = 'medium' }) {
         }
         .play-btn:hover {
           transform: scale(1.05) !important;
-          background-color: white !important;
+          opacity: 0.9;
         }
         .play-btn:active {
           transform: scale(0.95) !important;
