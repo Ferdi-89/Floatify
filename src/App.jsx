@@ -8,7 +8,9 @@ import ProfileModal from './components/ProfileModal';
 import useSpotifyCurrentTrack from './components/useSpotifyCurrentTrack';
 import useDocumentPiP from './components/useDocumentPiP';
 import Toast from './components/Toast';
-import { Settings, ExternalLink, Minimize2, LogOut, Maximize2, User, Music } from 'lucide-react';
+import { Settings, ExternalLink, Minimize2, LogOut, Maximize2, User, Music, Cast, Download } from 'lucide-react';
+
+
 import { FastAverageColor } from 'fast-average-color';
 
 const fac = new FastAverageColor();
@@ -27,6 +29,44 @@ function App() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profile, setProfile] = useState(null);
   const [bgColor, setBgColor] = useState('#09090b');
+
+  // PWA Install State
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
+  const handleCast = async () => {
+    if (window.PresentationRequest) {
+      const request = new PresentationRequest(['/']); // Cast the current URL
+      try {
+        const connection = await request.start();
+        setToast({ message: "Casting to external display...", type: 'success' });
+      } catch (error) {
+        if (error.name !== 'NotFoundError' && error.name !== 'AbortError') {
+          console.error("Cast failed", error);
+          setToast({ message: "Cast failed. Try using browser menu.", type: 'error' });
+        }
+      }
+    } else {
+      setToast({ message: "Casting not supported in this browser.", type: 'error' });
+    }
+  };
 
   // Settings State
   const [settings, setSettings] = useState(() => {
@@ -514,6 +554,16 @@ function App() {
                     <User size={20} />
                   )}
                 </button>
+
+                <button onClick={handleCast} title="Cast to TV/Screen" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                  <Cast size={20} />
+                </button>
+
+                {deferredPrompt && (
+                  <button onClick={handleInstallClick} title="Install App" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                    <Download size={20} />
+                  </button>
+                )}
 
                 <button onClick={() => setIsSettingsOpen(true)} title="Settings" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   <Settings size={20} />
