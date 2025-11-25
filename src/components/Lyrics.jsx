@@ -37,21 +37,69 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
     });
 
     useEffect(() => {
-        // Only scroll if activeIndex actually changed (not just mode change)
-        if (activeLineRef.current && lyricsContainerRef.current && activeIndex !== prevActiveIndexRef.current) {
+        if (activeLineRef.current && lyricsContainerRef.current) {
             activeLineRef.current.scrollIntoView({
                 behavior: 'smooth',
                 block: 'center',
             });
         }
-        prevActiveIndexRef.current = activeIndex;
-    }, [activeIndex]);
-
-    // Removed redundant useEffect for marginLeft - relying on styles.marginLeft in render
+    }, [activeIndex, settings.lyricsSize, settings.fontFamily, settings.lyricsAlign, settings.fontStyle, isMini, isMobile]);
 
     if (!currentTrack) return null;
 
-    // ... (keep existing loading and empty states)
+    if (loading) {
+        return (
+            <div style={{
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--color-text-secondary)',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0
+            }}>
+                <div className="spinner" style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '4px solid rgba(255, 255, 255, 0.1)',
+                    borderLeftColor: 'var(--color-primary)',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                }}></div>
+                <style>{`
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `}</style>
+            </div>
+        );
+    }
+
+    if (!lyrics || lyrics.length === 0) {
+        return (
+            <div className="flex-center" style={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 'var(--spacing-md)',
+                color: 'var(--color-text-muted)',
+                textAlign: 'center',
+                padding: 'var(--spacing-xl)'
+            }}>
+                <Music size={48} style={{ opacity: 0.3 }} />
+                <div>
+                    <p style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '4px' }}>No Lyrics Found</p>
+                    <p style={{ fontSize: '0.85rem' }}>Enjoy the instrumental vibes</p>
+                </div>
+            </div>
+        );
+    }
 
     // Determine base size and spacing based on mode (Main vs Mini)
     const getBaseStyles = () => {
@@ -135,7 +183,8 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
 
                 // Glow Logic
                 let textShadow = 'none';
-                if (isActive && !isMini && settings?.glowEnabled) {
+                // Disable heavy glow on mobile for performance
+                if (isActive && !isMini && settings?.glowEnabled && !isMobile) {
                     if (settings.themeMode === 'light') {
                         // Light Mode: Subtle dark glow/shadow for contrast
                         textShadow = '0 0 12px rgba(0,0,0,0.2), 0 0 24px rgba(0,0,0,0.1)';
@@ -144,8 +193,8 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                         textShadow = '0 0 20px rgba(255,255,255,0.4), 0 0 40px rgba(255,255,255,0.2)';
                     }
                 } else if (isActive && !isMini) {
-                    // Default subtle shadow if glow is disabled but active (optional, keeping existing behavior if any)
-                    textShadow = settings.themeMode === 'light' ? 'none' : '0 0 30px rgba(255,255,255,0.15)';
+                    // Default subtle shadow if glow is disabled or on mobile (lightweight)
+                    textShadow = settings.themeMode === 'light' ? 'none' : '0 0 10px rgba(255,255,255,0.1)';
                 }
 
                 return (
