@@ -26,7 +26,7 @@ function Player({ currentTrack, isPlaying, isMini, onControl, showInfo = true })
                     alignItems: 'center',
                     gap: 'var(--spacing-sm)',
                     minWidth: 0,
-                    overflow: 'hidden'
+                    // overflow: 'hidden' removed to allow shadow to show
                 }}>
                     <div style={{
                         width: isMini ? '40px' : '56px',

@@ -145,8 +145,10 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 fontWeight: '700',
                 linePaddingTop: '50px',
                 linePaddingBottom: '50px',
-                linePaddingRight: isCenter ? '10vw' : '15vw', // Responsive padding
-                marginLeft: isCenter ? '0' : '10vw' // Responsive margin
+                // Balance padding for center, or use small padding for left align
+                linePaddingRight: isCenter ? '10vw' : '10vw',
+                linePaddingLeft: isCenter ? '10vw' : 'var(--spacing-sm)',
+                marginLeft: isCenter ? '0' : '5vw' // Reduced margin to prevent truncation
             };
         }
     };
@@ -211,7 +213,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                             margin: `${styles.spacing} 0`,
                             paddingTop: styles.linePaddingTop,
                             paddingBottom: styles.linePaddingBottom,
-                            paddingLeft: 'var(--spacing-sm)',
+                            paddingLeft: styles.linePaddingLeft || 'var(--spacing-sm)', // Use dynamic padding
                             paddingRight: styles.linePaddingRight,
                             transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease, text-shadow 0.3s ease, font-variation-settings 0.3s ease',
                             opacity: opacity,
