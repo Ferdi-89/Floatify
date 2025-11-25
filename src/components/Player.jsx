@@ -28,18 +28,25 @@ function Player({ currentTrack, isPlaying, isMini, onControl, showInfo = true })
                     minWidth: 0,
                     overflow: 'hidden'
                 }}>
-                    <img
-                        src={currentTrack.album.images[0]?.url}
-                        alt="Album Art"
-                        style={{
-                            width: isMini ? '40px' : '56px',
-                            height: isMini ? '40px' : '56px',
-                            borderRadius: 'var(--border-radius-full)', // Circle for modern look
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                            objectFit: 'cover',
-                            animation: isPlaying ? 'spin 10s linear infinite' : 'none' // Optional: Spin effect
-                        }}
-                    />
+                    <div style={{
+                        width: isMini ? '40px' : '56px',
+                        height: isMini ? '40px' : '56px',
+                        borderRadius: '50%',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)', // Static shadow
+                        flexShrink: 0 // Prevent shrinking
+                    }}>
+                        <img
+                            src={currentTrack.album.images[0]?.url}
+                            alt="Album Art"
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: '50%',
+                                objectFit: 'cover',
+                                animation: isPlaying ? 'spin 10s linear infinite' : 'none'
+                            }}
+                        />
+                    </div>
                     <div style={{
                         display: 'flex',
                         flexDirection: 'column',
