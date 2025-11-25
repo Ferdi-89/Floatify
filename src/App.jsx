@@ -29,17 +29,25 @@ function App() {
   const [bgColor, setBgColor] = useState('#09090b');
 
   // Settings State
-  const [settings, setSettings] = useState({
-    themeColor: '#1db954',
-    lyricsSize: '1.5rem',
-    lyricsAlign: 'left',
-    dynamicBackground: false,
-    themeMode: 'dark',
-    hideControls: false,
-    fontFamily: 'Inter',
-    fontStyle: 'normal', // normal, italic
-    glowEnabled: true
+  const [settings, setSettings] = useState(() => {
+    const saved = localStorage.getItem('floatify_settings');
+    return saved ? JSON.parse(saved) : {
+      themeColor: '#1db954',
+      lyricsSize: '1.5rem',
+      lyricsAlign: 'left',
+      dynamicBackground: false,
+      themeMode: 'dark',
+      hideControls: false,
+      fontFamily: 'Inter',
+      fontStyle: 'normal',
+      glowEnabled: true
+    };
   });
+
+  // Persist Settings
+  useEffect(() => {
+    localStorage.setItem('floatify_settings', JSON.stringify(settings));
+  }, [settings]);
 
   // Handle Resize
   useEffect(() => {

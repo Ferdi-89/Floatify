@@ -11,9 +11,17 @@ export const AuthProvider = ({ children }) => {
     const args = new URLSearchParams(window.location.search);
     const code = args.get('code');
     const storedToken = window.localStorage.getItem("token");
+    const storedRefreshToken = window.localStorage.getItem("refresh_token");
+    const storedExpiresAt = window.localStorage.getItem("expires_at");
 
-    if (storedToken) {
+    // Check if token is expired
+    const isExpired = storedExpiresAt && Date.now() > parseInt(storedExpiresAt);
+
+    if (storedToken && !isExpired) {
       setToken(storedToken);
+    } else if (storedRefreshToken) {
+      // Try to refresh token
+      refreshAccessToken(storedRefreshToken);
     }
 
     if (code) {
@@ -41,8 +49,7 @@ export const AuthProvider = ({ children }) => {
           const response = await body.json();
 
           if (response.access_token) {
-            window.localStorage.setItem("token", response.access_token);
-            setToken(response.access_token);
+            handleTokenResponse(response);
             // Clean URL
             window.history.replaceState({}, document.title, "/");
           } else {
@@ -56,6 +63,50 @@ export const AuthProvider = ({ children }) => {
       getToken();
     }
   }, []);
+
+  const handleTokenResponse = (response) => {
+    const { access_token, refresh_token, expires_in } = response;
+    const expiresAt = Date.now() + expires_in * 1000;
+
+    window.localStorage.setItem("token", access_token);
+    window.localStorage.setItem("expires_at", expiresAt);
+    if (refresh_token) {
+      window.localStorage.setItem("refresh_token", refresh_token);
+    }
+
+    setToken(access_token);
+  };
+
+  const refreshAccessToken = async (refreshToken) => {
+    const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID?.trim();
+
+    try {
+      const payload = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken,
+          client_id: CLIENT_ID
+        })
+      };
+
+      const body = await fetch("https://accounts.spotify.com/api/token", payload);
+      const response = await body.json();
+
+      if (response.access_token) {
+        handleTokenResponse(response);
+      } else {
+        console.error("Failed to refresh token", response);
+        logout(); // Force logout if refresh fails
+      }
+    } catch (e) {
+      console.error("Error refreshing token", e);
+      logout();
+    }
+  };
 
   const login = async () => {
     const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID?.trim();
@@ -110,6 +161,8 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     window.localStorage.removeItem("token");
     window.localStorage.removeItem("verifier");
+    window.localStorage.removeItem("refresh_token");
+    window.localStorage.removeItem("expires_at");
   };
 
   return (
