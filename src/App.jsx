@@ -34,7 +34,8 @@ function App() {
     lyricsSize: '1.5rem',
     lyricsAlign: 'left',
     dynamicBackground: false,
-    themeMode: 'dark'
+    themeMode: 'dark',
+    hideControls: false
   });
 
   // Handle Resize
@@ -172,91 +173,144 @@ function App() {
       position: 'relative'
     }}>
       {(isMini || pipWindow) ? (
-        <>
-          {/* Top Bar: Track Info (Album Art + Text) */}
+        !currentTrack ? (
+          /* Idle View for PiP/Mini */
           <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            padding: '16px',
-            paddingRight: '60px',
-            background: 'transparent',
-            zIndex: 20,
+            height: '100%',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            gap: '12px'
+            justifyContent: 'center',
+            background: 'var(--color-background)',
+            color: 'var(--color-text-secondary)',
+            gap: 'var(--spacing-md)',
+            textAlign: 'center',
+            padding: 'var(--spacing-lg)'
           }}>
-            <img
-              src={currentTrack?.album.images[0]?.url}
-              alt="Album Art"
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: 'var(--border-radius-sm)',
-                objectFit: 'cover'
-              }}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <span style={{ fontWeight: '700', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {currentTrack?.name}
-              </span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {currentTrack?.artists.map(a => a.name).join(', ')}
-              </span>
-            </div>
-          </div>
-
-          {/* Mini/PiP Layout: Lyrics fill screen */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            overflowY: 'auto',
-            scrollbarWidth: 'none',
-            zIndex: 1,
-            paddingTop: '60px',
-            paddingBottom: '100px'
-          }}>
-            <Lyrics
-              currentTrack={currentTrack}
-              isPlaying={isPlaying}
-              progress={progress}
-              isMini={true}
-              settings={settings}
-            />
-          </div>
-
-          {/* Floating Player Bar (Controls Only) */}
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 10
-          }}>
-            <div className="glass-panel" style={{
-              borderRadius: 'var(--border-radius-full)',
-              padding: '8px 24px',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-              border: '1px solid var(--glass-border)',
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              background: 'var(--color-surface)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'rgba(24, 24, 27, 0.95)'
+              marginBottom: 'var(--spacing-sm)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
             }}>
-              <Player
+              <Music size={40} color="var(--color-primary)" />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '700', color: 'var(--color-text-primary)' }}>Floatify</h2>
+              <p style={{ margin: '4px 0 0', fontSize: '0.9rem' }}>Ready to play</p>
+            </div>
+            <button
+              onClick={() => handleControl('play')}
+              style={{
+                marginTop: 'var(--spacing-md)',
+                padding: '8px 24px',
+                borderRadius: 'var(--border-radius-full)',
+                background: 'var(--color-primary)',
+                color: '#000',
+                border: 'none',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '0.9rem'
+              }}
+            >
+              Resume Spotify
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Top Bar: Track Info (Album Art + Text) */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              padding: '16px',
+              paddingRight: '60px', // Added padding to avoid overlap with Exit button
+              background: 'transparent', // No dark shadow
+              zIndex: 20,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <img
+                src={currentTrack?.album.images[0]?.url}
+                alt="Album Art"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: 'var(--border-radius-sm)',
+                  objectFit: 'cover'
+                }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <span style={{ fontWeight: '700', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {currentTrack?.name}
+                </span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {currentTrack?.artists.map(a => a.name).join(', ')}
+                </span>
+              </div>
+            </div>
+
+            {/* Mini/PiP Layout: Lyrics fill screen */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              overflowY: 'auto',
+              scrollbarWidth: 'none',
+              zIndex: 1,
+              paddingTop: '60px', // Space for top bar
+              paddingBottom: '100px' // Space for floating player
+            }}>
+              <Lyrics
                 currentTrack={currentTrack}
                 isPlaying={isPlaying}
+                progress={progress}
                 isMini={true}
-                onControl={handleControl}
-                showInfo={false}
+                settings={settings}
               />
             </div>
-          </div>
-        </>
+
+            {/* Floating Player Bar (Controls Only) */}
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 10,
+              visibility: settings.hideControls ? 'hidden' : 'visible', // Hide but keep layout if needed (though absolute doesn't affect flow)
+              opacity: settings.hideControls ? 0 : 1,
+              transition: 'opacity 0.3s ease, visibility 0.3s ease'
+            }}>
+              <div className="glass-panel" style={{
+                borderRadius: 'var(--border-radius-full)',
+                padding: '8px 24px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                border: '1px solid var(--glass-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'var(--glass-background)' // Use variable for Light Mode support
+              }}>
+                <Player
+                  currentTrack={currentTrack}
+                  isPlaying={isPlaying}
+                  isMini={true}
+                  onControl={handleControl}
+                  showInfo={false} // Hide info in the bottom bar
+                />
+              </div>
+            </div>
+          </>
+        )
       ) : (
         <>
           {/* Main Window Layout */}
@@ -273,7 +327,8 @@ function App() {
                   alignItems: 'center',
                   padding: 'var(--spacing-md)',
                   zIndex: 10,
-                  background: 'rgba(0,0,0,0.2)'
+                  background: 'var(--glass-background)', // Use variable
+                  backdropFilter: 'blur(10px)'
                 }}>
                   <img
                     src={currentTrack?.album.images[0]?.url}
@@ -296,13 +351,19 @@ function App() {
                     </p>
                   </div>
 
-                  <Player
-                    currentTrack={currentTrack}
-                    isPlaying={isPlaying}
-                    isMini={false}
-                    onControl={handleControl}
-                    showInfo={false}
-                  />
+                  <div style={{
+                    visibility: settings.hideControls ? 'hidden' : 'visible',
+                    opacity: settings.hideControls ? 0 : 1,
+                    transition: 'all 0.3s ease'
+                  }}>
+                    <Player
+                      currentTrack={currentTrack}
+                      isPlaying={isPlaying}
+                      isMini={false}
+                      onControl={handleControl}
+                      showInfo={false}
+                    />
+                  </div>
                 </div>
 
                 {/* Right Panel: Lyrics (60%) */}
@@ -376,7 +437,10 @@ function App() {
                   padding: 'var(--spacing-md)',
                   paddingBottom: 'var(--spacing-xl)',
                   display: 'flex',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  visibility: settings.hideControls ? 'hidden' : 'visible',
+                  opacity: settings.hideControls ? 0 : 1,
+                  transition: 'all 0.3s ease'
                 }}>
                   <Player
                     currentTrack={currentTrack}
@@ -409,7 +473,10 @@ function App() {
               {/* Player at Bottom */}
               <div style={{
                 padding: 'var(--spacing-md)',
-                borderTop: '1px solid var(--color-border)'
+                borderTop: '1px solid var(--color-border)',
+                visibility: settings.hideControls ? 'hidden' : 'visible',
+                opacity: settings.hideControls ? 0 : 1,
+                transition: 'all 0.3s ease'
               }}>
                 <Player
                   currentTrack={currentTrack}

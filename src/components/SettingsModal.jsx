@@ -142,6 +142,36 @@ function SettingsModal({ isOpen, onClose, settings, updateSettings }) {
                     </button>
                 </div>
 
+                {/* Hide Player Controls Toggle */}
+                <div style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Hide Player Controls</label>
+                    <button
+                        onClick={() => updateSettings('hideControls', !settings.hideControls)}
+                        style={{
+                            width: '48px',
+                            height: '24px',
+                            background: settings.hideControls ? 'var(--color-primary)' : 'var(--color-surface-hover)',
+                            borderRadius: '12px',
+                            position: 'relative',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'background 0.2s ease'
+                        }}
+                    >
+                        <div style={{
+                            width: '20px',
+                            height: '20px',
+                            background: '#fff',
+                            borderRadius: '50%',
+                            position: 'absolute',
+                            top: '2px',
+                            left: settings.hideControls ? '26px' : '2px',
+                            transition: 'left 0.2s ease',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        }} />
+                    </button>
+                </div>
+
                 {/* Lyrics Size */}
                 <div style={{ marginBottom: 'var(--spacing-lg)' }}>
                     <label style={{ display: 'block', marginBottom: 'var(--spacing-sm)', color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Lyrics Size</label>
