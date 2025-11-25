@@ -8,7 +8,7 @@ import ProfileModal from './components/ProfileModal';
 import useSpotifyCurrentTrack from './components/useSpotifyCurrentTrack';
 import useDocumentPiP from './components/useDocumentPiP';
 import Toast from './components/Toast';
-import { Settings, ExternalLink, Minimize2, LogOut, Maximize2, User } from 'lucide-react';
+import { Settings, ExternalLink, Minimize2, LogOut, Maximize2, User, Music } from 'lucide-react';
 import { FastAverageColor } from 'fast-average-color';
 
 const fac = new FastAverageColor();
