@@ -138,98 +138,114 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                     marginLeft: isCenter ? '0' : '5vw' // Reduced margin to prevent truncation
                 };
             }
-        };
 
-        const styles = getBaseStyles();
+            // Desktop Main Window: LARGE FONT with balanced spacing
+            return {
+                fontSize: `${3.5 * sizeScale}rem`,
+                spacing: 'var(--spacing-4_5xl)', // 300px vertical gap
+                activeScale: 1.05,
+                blurStrength: 2,
+                fontWeight: '700',
+                linePaddingTop: '50px',
+                linePaddingBottom: '50px',
+                // Balance padding for center, or use small padding for left/right align
+                linePaddingRight: isCenter ? '10vw' : '10vw',
+                linePaddingLeft: isCenter ? '10vw' : 'var(--spacing-sm)',
+                marginLeft: isCenter ? '0' : '5vw' // Reduced margin to prevent truncation
+            };
+        }
+    };
 
-        return (
-            <div
-                key={`lyrics-${isMini ? 'mini' : 'main'}`}
-                ref={lyricsContainerRef}
-                style={{
-                    padding: isMini || isMobile ? 'var(--spacing-xl)' : 'var(--spacing-2xl)',
-                    paddingTop: '50vh', // Center first line vertically
-                    paddingBottom: '50vh',
-                    height: '100%',
-                    marginLeft: styles.marginLeft, // Dynamic margin
-                    overflowY: 'auto',
-                    textAlign: lyricsAlign,
-                    maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
-                    WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
-                    WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS/Android
-                    scrollBehavior: 'smooth'
-                }}
-                className="lyrics-container"
-            >
-                {lyrics.map((line, index) => {
-                    const isActive = index === activeIndex;
-                    const distance = Math.abs(index - activeIndex);
+    const styles = getBaseStyles();
 
-                    const opacity = isActive ? 1 : Math.max(0.2, 1 - distance * 0.4);
-                    const blur = isActive ? 0 : Math.min(styles.blurStrength, distance * 1.5);
-                    const scale = isActive ? styles.activeScale : 0.95;
-                    const fontWeight = isActive ? styles.fontWeight : '500';
+    return (
+        <div
+            key={`lyrics-${isMini ? 'mini' : 'main'}`}
+            ref={lyricsContainerRef}
+            style={{
+                padding: isMini || isMobile ? 'var(--spacing-xl)' : 'var(--spacing-2xl)',
+                paddingTop: '50vh', // Center first line vertically
+                paddingBottom: '50vh',
+                height: '100%',
+                marginLeft: styles.marginLeft, // Dynamic margin
+                overflowY: 'auto',
+                textAlign: lyricsAlign,
+                maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
+                WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS/Android
+                scrollBehavior: 'smooth'
+            }}
+            className="lyrics-container"
+        >
+            {lyrics.map((line, index) => {
+                const isActive = index === activeIndex;
+                const distance = Math.abs(index - activeIndex);
 
-                    // Glow Logic
-                    let textShadow = 'none';
-                    // Disable heavy glow on mobile for performance
-                    if (isActive && !isMini && settings?.glowEnabled && !isMobile) {
-                        if (settings.themeMode === 'light') {
-                            // Light Mode: Subtle dark glow/shadow for contrast
-                            textShadow = '0 0 12px rgba(0,0,0,0.2), 0 0 24px rgba(0,0,0,0.1)';
-                        } else {
-                            // Dark Mode: Strong white/primary glow
-                            textShadow = '0 0 20px rgba(255,255,255,0.4), 0 0 40px rgba(255,255,255,0.2)';
-                        }
-                    } else if (isActive && !isMini) {
-                        // Default subtle shadow if glow is disabled or on mobile (lightweight)
-                        textShadow = settings.themeMode === 'light' ? 'none' : '0 0 10px rgba(255,255,255,0.1)';
+                const opacity = isActive ? 1 : Math.max(0.2, 1 - distance * 0.4);
+                const blur = isActive ? 0 : Math.min(styles.blurStrength, distance * 1.5);
+                const scale = isActive ? styles.activeScale : 0.95;
+                const fontWeight = isActive ? styles.fontWeight : '500';
+
+                // Glow Logic
+                let textShadow = 'none';
+                // Disable heavy glow on mobile for performance
+                if (isActive && !isMini && settings?.glowEnabled && !isMobile) {
+                    if (settings.themeMode === 'light') {
+                        // Light Mode: Subtle dark glow/shadow for contrast
+                        textShadow = '0 0 12px rgba(0,0,0,0.2), 0 0 24px rgba(0,0,0,0.1)';
+                    } else {
+                        // Dark Mode: Strong white/primary glow
+                        textShadow = '0 0 20px rgba(255,255,255,0.4), 0 0 40px rgba(255,255,255,0.2)';
                     }
+                } else if (isActive && !isMini) {
+                    // Default subtle shadow if glow is disabled or on mobile (lightweight)
+                    textShadow = settings.themeMode === 'light' ? 'none' : '0 0 10px rgba(255,255,255,0.1)';
+                }
 
-                    return (
-                        <p
-                            key={index}
-                            ref={isActive ? activeLineRef : null}
-                            style={{
-                                fontSize: styles.fontSize,
-                                lineHeight: '1.3',
-                                color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                                fontWeight: fontWeight,
-                                fontFamily: settings?.fontFamily === 'Mono' ? '"JetBrains Mono", monospace' :
-                                    settings?.fontFamily === 'Serif' ? 'Lora, serif' :
-                                        settings?.fontFamily === 'JetBrains Mono' ? '"JetBrains Mono", monospace' :
-                                            settings?.fontFamily === 'Lora' ? 'Lora, serif' :
-                                                settings?.fontFamily || 'inherit',
-                                fontStyle: settings?.fontStyle || 'normal',
-                                margin: `${styles.spacing} 0`,
-                                paddingTop: styles.linePaddingTop,
-                                paddingBottom: styles.linePaddingBottom,
-                                paddingLeft: styles.linePaddingLeft || 'var(--spacing-sm)', // Use dynamic padding
-                                paddingRight: styles.linePaddingRight,
-                                transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease, text-shadow 0.3s ease, font-variation-settings 0.3s ease',
-                                opacity: opacity,
-                                filter: `blur(${blur}px)`,
-                                transform: `scale(${scale})`,
-                                transformOrigin: lyricsAlign === 'center' ? 'center' : lyricsAlign === 'right' ? 'right center' : 'left center',
-                                cursor: 'default',
-                                textShadow: textShadow,
-                                willChange: 'transform, opacity, filter', // Hint for GPU acceleration
-                                maxWidth: '100%',
-                                overflowWrap: 'break-word',
-                                wordBreak: 'break-word'
-                            }}
-                        >
-                            {line.text}
-                        </p>
-                    );
-                })}
-                <style>{`
+                return (
+                    <p
+                        key={index}
+                        ref={isActive ? activeLineRef : null}
+                        style={{
+                            fontSize: styles.fontSize,
+                            lineHeight: '1.3',
+                            color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                            fontWeight: fontWeight,
+                            fontFamily: settings?.fontFamily === 'Mono' ? '"JetBrains Mono", monospace' :
+                                settings?.fontFamily === 'Serif' ? 'Lora, serif' :
+                                    settings?.fontFamily === 'JetBrains Mono' ? '"JetBrains Mono", monospace' :
+                                        settings?.fontFamily === 'Lora' ? 'Lora, serif' :
+                                            settings?.fontFamily || 'inherit',
+                            fontStyle: settings?.fontStyle || 'normal',
+                            margin: `${styles.spacing} 0`,
+                            paddingTop: styles.linePaddingTop,
+                            paddingBottom: styles.linePaddingBottom,
+                            paddingLeft: styles.linePaddingLeft || 'var(--spacing-sm)', // Use dynamic padding
+                            paddingRight: styles.linePaddingRight,
+                            transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease, text-shadow 0.3s ease, font-variation-settings 0.3s ease',
+                            opacity: opacity,
+                            filter: `blur(${blur}px)`,
+                            transform: `scale(${scale})`,
+                            transformOrigin: lyricsAlign === 'center' ? 'center' : lyricsAlign === 'right' ? 'right center' : 'left center',
+                            cursor: 'default',
+                            textShadow: textShadow,
+                            willChange: 'transform, opacity, filter', // Hint for GPU acceleration
+                            maxWidth: '100%',
+                            overflowWrap: 'break-word',
+                            wordBreak: 'break-word'
+                        }}
+                    >
+                        {line.text}
+                    </p>
+                );
+            })}
+            <style>{`
         .lyrics-container::-webkit-scrollbar {
           display: none;
         }
       `}</style>
-            </div>
-        );
-    }
+        </div>
+    );
+}
 
-    export default Lyrics;
+export default Lyrics;
