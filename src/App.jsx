@@ -351,43 +351,34 @@ function App() {
       overflow: 'hidden',
       transition: 'background-color 0.5s ease'
     }}>
-      {/* Header (Only in Main Window, Non-Mini Mode) */}
-      {!isMini && !pipWindow && (
+      {/* Header (Only in Main Window, Non-Mini Mode, Desktop Only) */}
+      {!isMini && !pipWindow && !isMobile && (
         <header style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: isMobile ? '10px 16px' : 'var(--spacing-md) var(--spacing-lg)',
+          padding: 'var(--spacing-md) var(--spacing-lg)',
           borderBottom: '1px solid var(--color-border)',
           position: 'relative',
           zIndex: 50,
           background: 'var(--color-background)',
           flexShrink: 0
         }}>
-          {/* Mobile CSS Overrides */}
-          <style>{`
-            @media (max-width: 768px) {
-              .desktop-only { display: none !important; }
-            }
-          `}</style>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-primary)' }}></div>
-            <h1 style={{ margin: 0, fontSize: isMobile ? '1rem' : '1.25rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Floatify</h1>
+            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Floatify</h1>
           </div>
 
-          <div style={{ display: 'flex', gap: isMobile ? '4px' : 'var(--spacing-sm)' }}>
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
             {token && (
               <>
                 <button onClick={() => setIsSettingsOpen(true)} title="Settings" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   <Settings size={20} />
                 </button>
 
-                {/* Pop-out Button - Hidden on Mobile via CSS & JS */}
                 <button
                   onClick={togglePiP}
                   title={pipWindow ? "Close Pop-out" : "Pop-out Player"}
-                  className="desktop-only"
                   style={{ padding: '8px', color: 'var(--color-text-secondary)' }}
                 >
                   <ExternalLink size={20} />
@@ -406,6 +397,60 @@ function App() {
             )}
           </div>
         </header>
+      )}
+
+      {/* Mobile Floating Controls (Settings, Mini Mode, Logout) - Mimics Mini Mode Logic */}
+      {isMobile && !isMini && !pipWindow && token && (
+        <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 50, display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="glass-panel"
+            style={{
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-text-primary)',
+              background: 'rgba(0,0,0,0.5)'
+            }}
+          >
+            <Settings size={16} />
+          </button>
+          <button
+            onClick={() => setIsMini(true)}
+            className="glass-panel"
+            style={{
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-text-primary)',
+              background: 'rgba(0,0,0,0.5)'
+            }}
+          >
+            <Minimize2 size={16} />
+          </button>
+          <button
+            onClick={logout}
+            className="glass-panel"
+            style={{
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-text-primary)',
+              background: 'rgba(0,0,0,0.5)'
+            }}
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
       )}
 
       {/* Mini Mode Exit Button */}
