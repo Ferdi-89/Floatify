@@ -286,14 +286,16 @@ function App() {
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 10,
-              visibility: settings.hideControls ? 'hidden' : 'visible', // Hide but keep layout if needed (though absolute doesn't affect flow)
+              visibility: settings.hideControls ? 'hidden' : 'visible',
               opacity: settings.hideControls ? 0 : 1,
-              transition: 'opacity 0.3s ease, visibility 0.3s ease'
+              transition: 'opacity 0.3s ease, visibility 0.3s ease',
+              width: 'max-content', // Ensure width fits content
+              padding: '10px' // Add padding to container to prevent shadow clipping
             }}>
               <div className="glass-panel" style={{
                 borderRadius: 'var(--border-radius-full)',
                 padding: '8px 24px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                boxShadow: settings.themeMode === 'light' ? '0 8px 32px rgba(0,0,0,0.15)' : '0 8px 32px rgba(0,0,0,0.5)', // Softer shadow
                 border: '1px solid var(--glass-border)',
                 display: 'flex',
                 alignItems: 'center',
@@ -385,37 +387,6 @@ function App() {
             ) : (
               /* Mobile Portrait Layout: Info Top, Lyrics Middle, Controls Bottom */
               <>
-                {/* Mobile Top Bar: Track Info */}
-                <div style={{
-                  padding: 'var(--spacing-md)',
-                  paddingRight: '140px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--spacing-md)',
-                  zIndex: 10,
-                  background: 'transparent'
-                }}>
-                  <img
-                    src={currentTrack?.album.images[0]?.url}
-                    alt="Album Art"
-                    style={{
-                      width: '56px',
-                      height: '56px',
-                      borderRadius: 'var(--border-radius-sm)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                      objectFit: 'cover'
-                    }}
-                  />
-                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <span style={{ fontWeight: '700', fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {currentTrack?.name}
-                    </span>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {currentTrack?.artists.map(a => a.name).join(', ')}
-                    </span>
-                  </div>
-                </div>
-
                 {/* Lyrics Area */}
                 <div style={{
                   flex: 1,
@@ -560,80 +531,95 @@ function App() {
         </header>
       )}
 
-      {/* Mobile Floating Controls */}
+      {/* Mobile Header (Unified) */}
       {isMobile && !isMini && !pipWindow && token && (
-        <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 50, display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => setIsProfileOpen(true)}
-            className="glass-panel"
-            style={{
-              borderRadius: '50%',
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--color-text-primary)',
-              background: 'rgba(0,0,0,0.5)',
-              overflow: 'hidden'
-            }}
-          >
-            {profile?.images?.[0]?.url ? (
-              <img src={profile.images[0].url} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <User size={16} />
-            )}
-          </button>
+        <header style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: 'var(--spacing-md)',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)'
+        }}>
+          {/* Track Info (Left) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+            <img
+              src={currentTrack?.album.images[0]?.url}
+              alt="Album Art"
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: 'var(--border-radius-sm)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                objectFit: 'cover'
+              }}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <span style={{ fontWeight: '700', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'white' }}>
+                {currentTrack?.name || 'Floatify'}
+              </span>
+              <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {currentTrack?.artists?.[0]?.name || 'Ready to play'}
+              </span>
+            </div>
+          </div>
 
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="glass-panel"
-            style={{
-              borderRadius: '50%',
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--color-text-primary)',
-              background: 'rgba(0,0,0,0.5)'
-            }}
-          >
-            <Settings size={16} />
-          </button>
-          <button
-            onClick={() => setIsMini(true)}
-            className="glass-panel"
-            style={{
-              borderRadius: '50%',
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--color-text-primary)',
-              background: 'rgba(0,0,0,0.5)'
-            }}
-          >
-            <Minimize2 size={16} />
-          </button>
-          <button
-            onClick={logout}
-            className="glass-panel"
-            style={{
-              borderRadius: '50%',
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--color-text-primary)',
-              background: 'rgba(0,0,0,0.5)'
-            }}
-          >
-            <LogOut size={16} />
-          </button>
-        </div>
+          {/* Controls (Right) */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              style={{
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: '50%',
+                backdropFilter: 'blur(4px)'
+              }}
+            >
+              <Settings size={18} />
+            </button>
+            <button
+              onClick={() => setIsMini(true)}
+              style={{
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: '50%',
+                backdropFilter: 'blur(4px)'
+              }}
+            >
+              <Minimize2 size={18} />
+            </button>
+            <button
+              onClick={logout}
+              style={{
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: '50%',
+                backdropFilter: 'blur(4px)'
+              }}
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
+        </header>
       )}
 
       {/* Mini Mode Exit Button */}

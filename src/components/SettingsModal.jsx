@@ -30,19 +30,22 @@ function SettingsModal({ isOpen, onClose, settings, updateSettings }) {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.8)',
+            backgroundColor: 'rgba(0,0,0,0.5)', // Lighter backdrop
             zIndex: 100,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backdropFilter: 'blur(4px)'
+            backdropFilter: 'blur(8px)' // Increased blur for better separation
         }}>
             <div className="glass-panel animate-fade-in" style={{
                 width: '90%',
                 maxWidth: '400px',
                 padding: 'var(--spacing-lg)',
                 borderRadius: 'var(--border-radius-lg)',
-                position: 'relative'
+                position: 'relative',
+                backgroundColor: 'var(--color-background)', // Use dynamic background
+                border: '1px solid var(--color-border)',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>Settings</h2>
