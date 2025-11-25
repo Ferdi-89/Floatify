@@ -177,6 +177,8 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 const scale = isActive ? styles.activeScale : 0.95;
                 const fontWeight = isActive ? styles.fontWeight : '500';
 
+                const isFirstLine = index === 0;
+
                 return (
                     <p
                         key={index}
@@ -195,7 +197,9 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                             opacity: opacity,
                             filter: `blur(${blur}px)`,
                             transform: `scale(${scale})`,
-                            transformOrigin: lyricsAlign === 'center' ? 'center' : 'left center',
+                            transformOrigin: (lyricsAlign === 'center' || isFirstLine) ? 'center' : 'left center',
+                            textAlign: isFirstLine ? 'center' : lyricsAlign, // Force center for first line
+                            width: '100%', // Ensure it takes full width to center properly
                             cursor: 'default',
                             textShadow: isActive && !isMini ? '0 0 30px rgba(255,255,255,0.15)' : 'none'
                         }}
