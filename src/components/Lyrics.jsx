@@ -158,6 +158,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
             ref={lyricsContainerRef}
             style={{
                 padding: isMini || isMobile ? 'var(--spacing-xl)' : 'var(--spacing-2xl)',
+                paddingTop: '50vh', // Center first line vertically
                 paddingBottom: '50vh',
                 height: '100%',
                 marginLeft: (isMini || isMobile) ? '0' : '200px', // 0 margin for mobile/mini
@@ -177,8 +178,6 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 const scale = isActive ? styles.activeScale : 0.95;
                 const fontWeight = isActive ? styles.fontWeight : '500';
 
-                const isFirstLine = index === 0;
-
                 return (
                     <p
                         key={index}
@@ -197,9 +196,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                             opacity: opacity,
                             filter: `blur(${blur}px)`,
                             transform: `scale(${scale})`,
-                            transformOrigin: (lyricsAlign === 'center' || isFirstLine) ? 'center' : 'left center',
-                            textAlign: isFirstLine ? 'center' : lyricsAlign, // Force center for first line
-                            width: '100%', // Ensure it takes full width to center properly
+                            transformOrigin: lyricsAlign === 'center' ? 'center' : 'left center',
                             cursor: 'default',
                             textShadow: isActive && !isMini ? '0 0 30px rgba(255,255,255,0.15)' : 'none'
                         }}
