@@ -4,10 +4,11 @@ import { useAuth } from './auth/AuthContext';
 import Player from './components/Player';
 import Lyrics from './components/Lyrics';
 import SettingsModal from './components/SettingsModal';
+import ProfileModal from './components/ProfileModal';
 import useSpotifyCurrentTrack from './components/useSpotifyCurrentTrack';
 import useDocumentPiP from './components/useDocumentPiP';
 import Toast from './components/Toast';
-import { Settings, ExternalLink, Minimize2, LogOut, Maximize2 } from 'lucide-react';
+import { Settings, ExternalLink, Minimize2, LogOut, Maximize2, User } from 'lucide-react';
 import { FastAverageColor } from 'fast-average-color';
 
 const fac = new FastAverageColor();
@@ -34,8 +35,25 @@ function App() {
     themeColor: '#1db954',
     lyricsSize: '1.5rem',
     lyricsAlign: 'left',
-    dynamicBackground: false
+    dynamicBackground: false,
+    themeMode: 'dark' // Default to dark mode
   });
+
+  // Profile State
+  const [profile, setProfile] = useState(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Fetch Profile Data
+  useEffect(() => {
+    if (token) {
+      fetch('https://api.spotify.com/v1/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => setProfile(data))
+        .catch(err => console.error("Error fetching profile:", err));
+    }
+  }, [token]);
 
   // Dynamic Background State
   const [bgColor, setBgColor] = useState('#09090b');
@@ -47,10 +65,12 @@ function App() {
 
   // Handle Dynamic Background
   useEffect(() => {
+    const isLight = settings.themeMode === 'light';
+    const defaultBg = isLight ? '#ffffff' : '#09090b';
+
     if (settings.dynamicBackground && currentTrack?.album?.images[0]?.url) {
       const imageUrl = currentTrack.album.images[0].url;
 
-      // Create a temporary image to extract color
       const img = new Image();
       img.crossOrigin = "Anonymous";
       img.src = imageUrl;
@@ -58,30 +78,64 @@ function App() {
       img.onload = () => {
         try {
           const color = fac.getColor(img);
-          // Darken the color to ensure text readability
-          // We mix it with black (0.8 factor)
-          const r = Math.floor(color.value[0] * 0.2);
-          const g = Math.floor(color.value[1] * 0.2);
-          const b = Math.floor(color.value[2] * 0.2);
+
+          let r, g, b;
+          if (isLight) {
+            // Light Mode: Mix with white (0.9 factor) for pastel look
+            r = Math.floor(color.value[0] * 0.1 + 255 * 0.9);
+            g = Math.floor(color.value[1] * 0.1 + 255 * 0.9);
+            b = Math.floor(color.value[2] * 0.1 + 255 * 0.9);
+          } else {
+            // Dark Mode: Mix with black (0.2 factor) for dark look
+            r = Math.floor(color.value[0] * 0.2);
+            g = Math.floor(color.value[1] * 0.2);
+            b = Math.floor(color.value[2] * 0.2);
+          }
+
           setBgColor(`rgb(${r}, ${g}, ${b})`);
         } catch (e) {
           console.error("Error extracting color", e);
-          setBgColor('#09090b');
+          setBgColor(defaultBg);
         }
       };
     } else {
-      setBgColor('#09090b');
+      setBgColor(defaultBg);
     }
-  }, [settings.dynamicBackground, currentTrack?.album?.images]);
+  }, [settings.dynamicBackground, settings.themeMode, currentTrack?.album?.images]);
 
-  // Apply background color
+  // Apply background color and theme variables
   useEffect(() => {
+    const isLight = settings.themeMode === 'light';
+
     document.documentElement.style.setProperty('--color-background', bgColor);
-    // Also update surface colors to be slightly lighter than background
-    // This is a simple approximation
-    document.documentElement.style.setProperty('--color-surface', `color-mix(in srgb, ${bgColor}, white 5%)`);
-    document.documentElement.style.setProperty('--color-surface-hover', `color-mix(in srgb, ${bgColor}, white 10%)`);
-  }, [bgColor]);
+
+    // Surface colors
+    if (isLight) {
+      document.documentElement.style.setProperty('--color-surface', `color-mix(in srgb, ${bgColor}, black 5%)`);
+      document.documentElement.style.setProperty('--color-surface-hover', `color-mix(in srgb, ${bgColor}, black 10%)`);
+
+      // Text Colors
+      document.documentElement.style.setProperty('--color-text-primary', '#000000');
+      document.documentElement.style.setProperty('--color-text-secondary', '#52525b'); // Zinc-600
+      document.documentElement.style.setProperty('--color-text-muted', '#71717a'); // Zinc-500
+
+      // Glass Effect
+      document.documentElement.style.setProperty('--glass-background', 'rgba(255, 255, 255, 0.8)');
+      document.documentElement.style.setProperty('--glass-border', 'rgba(0, 0, 0, 0.1)');
+    } else {
+      document.documentElement.style.setProperty('--color-surface', `color-mix(in srgb, ${bgColor}, white 5%)`);
+      document.documentElement.style.setProperty('--color-surface-hover', `color-mix(in srgb, ${bgColor}, white 10%)`);
+
+      // Text Colors
+      document.documentElement.style.setProperty('--color-text-primary', '#ffffff');
+      document.documentElement.style.setProperty('--color-text-secondary', '#a1a1aa'); // Zinc-400
+      document.documentElement.style.setProperty('--color-text-muted', '#71717a'); // Zinc-500
+
+      // Glass Effect
+      document.documentElement.style.setProperty('--glass-background', 'rgba(24, 24, 27, 0.95)');
+      document.documentElement.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.08)');
+    }
+  }, [bgColor, settings.themeMode]);
 
   const updateSettings = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -132,13 +186,16 @@ function App() {
     }
   };
 
-  const togglePiP = () => {
-    if (pipWindow) {
-      closePiP();
-    } else {
-      requestPiP(350, 500);
-    }
-  };
+  const [isLandscape, setIsLandscape] = useState(window.innerHeight < window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setIsLandscape(window.innerHeight < window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Content for both Main Window and PiP Window
   const PlayerContent = (
@@ -159,6 +216,7 @@ function App() {
             left: 0,
             right: 0,
             padding: '16px',
+            paddingRight: '60px', // Added padding to avoid overlap with Exit button
             background: 'transparent', // No dark shadow
             zIndex: 20,
             display: 'flex',
@@ -239,70 +297,133 @@ function App() {
         <>
           {/* Main Window Layout */}
           {isMobile ? (
-            /* Mobile Layout: Info Top, Lyrics Middle, Controls Bottom */
-            <>
-              {/* Mobile Top Bar: Track Info */}
-              <div style={{
-                padding: 'var(--spacing-md)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--spacing-md)',
-                zIndex: 10,
-                background: 'transparent' // Removed dark gradient shadow
-              }}>
-                <img
-                  src={currentTrack?.album.images[0]?.url}
-                  alt="Album Art"
-                  style={{
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: 'var(--border-radius-sm)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                    objectFit: 'cover'
-                  }}
-                />
-                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                  <span style={{ fontWeight: '700', fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {currentTrack?.name}
-                  </span>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {currentTrack?.artists.map(a => a.name).join(', ')}
-                  </span>
+            isLandscape ? (
+              /* Mobile Landscape Layout: Side-by-Side */
+              <div style={{ display: 'flex', height: '100%', width: '100%' }}>
+                {/* Left Panel: Info & Controls (40%) */}
+                <div style={{
+                  width: '40%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: 'var(--spacing-md)',
+                  zIndex: 10,
+                  background: 'rgba(0,0,0,0.2)' // Slight tint to separate
+                }}>
+                  <img
+                    src={currentTrack?.album.images[0]?.url}
+                    alt="Album Art"
+                    style={{
+                      width: '120px',
+                      height: '120px',
+                      borderRadius: 'var(--border-radius-md)',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                      objectFit: 'cover',
+                      marginBottom: 'var(--spacing-md)'
+                    }}
+                  />
+                  <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-lg)', width: '100%' }}>
+                    <h2 style={{ fontSize: '1.1rem', fontWeight: '700', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {currentTrack?.name}
+                    </h2>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {currentTrack?.artists.map(a => a.name).join(', ')}
+                    </p>
+                  </div>
+
+                  <Player
+                    currentTrack={currentTrack}
+                    isPlaying={isPlaying}
+                    isMini={false}
+                    onControl={handleControl}
+                    showInfo={false}
+                  />
+                </div>
+
+                {/* Right Panel: Lyrics (60%) */}
+                <div style={{
+                  width: '60%',
+                  height: '100%',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  <Lyrics
+                    currentTrack={currentTrack}
+                    isPlaying={isPlaying}
+                    progress={progress}
+                    isMini={false}
+                    settings={settings}
+                  />
                 </div>
               </div>
+            ) : (
+              /* Mobile Portrait Layout: Info Top, Lyrics Middle, Controls Bottom */
+              <>
+                {/* Mobile Top Bar: Track Info */}
+                <div style={{
+                  padding: 'var(--spacing-md)',
+                  paddingRight: '140px', // Added large padding to avoid overlap with 3 floating buttons
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-md)',
+                  zIndex: 10,
+                  background: 'transparent' // Removed dark gradient shadow
+                }}>
+                  <img
+                    src={currentTrack?.album.images[0]?.url}
+                    alt="Album Art"
+                    style={{
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: 'var(--border-radius-sm)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                      objectFit: 'cover'
+                    }}
+                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                    <span style={{ fontWeight: '700', fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {currentTrack?.name}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {currentTrack?.artists.map(a => a.name).join(', ')}
+                    </span>
+                  </div>
+                </div>
 
-              {/* Lyrics Area */}
-              <div style={{
-                flex: 1,
-                minHeight: 0,
-                overflow: 'hidden',
-                position: 'relative'
-              }}>
-                <Lyrics
-                  currentTrack={currentTrack}
-                  isPlaying={isPlaying}
-                  progress={progress}
-                  isMini={false}
-                  settings={settings}
-                />
-              </div>
+                {/* Lyrics Area */}
+                <div style={{
+                  flex: 1,
+                  minHeight: 0,
+                  overflow: 'hidden',
+                  position: 'relative'
+                }}>
+                  <Lyrics
+                    currentTrack={currentTrack}
+                    isPlaying={isPlaying}
+                    progress={progress}
+                    isMini={false}
+                    settings={settings}
+                  />
+                </div>
 
-              {/* Mobile Bottom Bar: Controls Only */}
-              <div style={{
-                padding: 'var(--spacing-md)',
-                paddingBottom: 'var(--spacing-xl)', // Extra padding for mobile bottom nav area
-                display: 'flex',
-                justifyContent: 'center'
-              }}>
-                <Player
-                  currentTrack={currentTrack}
-                  isPlaying={isPlaying}
-                  isMini={false}
-                  onControl={handleControl}
-                  showInfo={false} // Hide info, show only controls
-                />
-              </div>
-            </>
+                {/* Mobile Bottom Bar: Controls Only */}
+                <div style={{
+                  padding: 'var(--spacing-md)',
+                  paddingBottom: 'var(--spacing-xl)', // Extra padding for mobile bottom nav area
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}>
+                  <Player
+                    currentTrack={currentTrack}
+                    isPlaying={isPlaying}
+                    isMini={false}
+                    onControl={handleControl}
+                    showInfo={false} // Hide info, show only controls
+                  />
+                </div>
+              </>
+            )
           ) : (
             /* Desktop Layout: Lyrics Fill, Player Bottom with Info */
             <>
@@ -372,6 +493,15 @@ function App() {
           <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
             {token && (
               <>
+                {/* Profile Button */}
+                <button onClick={() => setIsProfileOpen(true)} title="Profile" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                  {profile?.images?.[0]?.url ? (
+                    <img src={profile.images[0].url} alt="Profile" style={{ width: '20px', height: '20px', borderRadius: '50%' }} />
+                  ) : (
+                    <User size={20} />
+                  )}
+                </button>
+
                 <button onClick={() => setIsSettingsOpen(true)} title="Settings" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   <Settings size={20} />
                 </button>
@@ -402,6 +532,29 @@ function App() {
       {/* Mobile Floating Controls (Settings, Mini Mode, Logout) - Mimics Mini Mode Logic */}
       {isMobile && !isMini && !pipWindow && token && (
         <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 50, display: 'flex', gap: '8px' }}>
+          {/* Profile Button Mobile */}
+          <button
+            onClick={() => setIsProfileOpen(true)}
+            className="glass-panel"
+            style={{
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-text-primary)',
+              background: 'rgba(0,0,0,0.5)',
+              overflow: 'hidden'
+            }}
+          >
+            {profile?.images?.[0]?.url ? (
+              <img src={profile.images[0].url} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <User size={16} />
+            )}
+          </button>
+
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="glass-panel"
@@ -588,6 +741,13 @@ function App() {
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
         updateSettings={updateSettings}
+      />
+
+      {/* Profile Modal */}
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        profile={profile}
       />
     </div>
   );

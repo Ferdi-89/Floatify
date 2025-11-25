@@ -49,14 +49,10 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
 
     // Force margin to be applied when mode changes
     useEffect(() => {
-        console.log('🎵 Mode changed to:', isMini ? 'MINI' : 'MAIN WINDOW');
-        console.log('📱 Mobile check:', isMobile);
-
         // Use only marginLeft (no transform to avoid double offset)
         if (lyricsContainerRef.current) {
             // Reset margin for mobile or mini mode
             lyricsContainerRef.current.style.marginLeft = (isMini || isMobile) ? '0' : '200px';
-            console.log('🎵 Applied marginLeft:', (isMini || isMobile) ? '0' : '200px');
         }
     }, [isMini, isMobile]);
 
@@ -64,23 +60,32 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
 
     if (loading) {
         return (
-            <div className="flex-center" style={{
+            <div style={{
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--color-text-secondary)',
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 right: 0,
-                bottom: 0,
-                flexDirection: 'column',
-                gap: 'var(--spacing-md)',
-                color: 'var(--color-text-secondary)',
+                bottom: 0
             }}>
-                <p style={{
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    color: 'var(--color-text-primary)'
-                }}>
-                    Loading lyrics...
-                </p>
+                <div className="spinner" style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '4px solid rgba(255, 255, 255, 0.1)',
+                    borderLeftColor: 'var(--color-primary)',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                }}></div>
+                <style>{`
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                `}</style>
             </div>
         );
     }
@@ -89,7 +94,10 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
         return (
             <div className="flex-center" style={{
                 height: '100%',
+                display: 'flex',
                 flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
                 gap: 'var(--spacing-md)',
                 color: 'var(--color-text-muted)',
                 textAlign: 'center',

@@ -76,6 +76,45 @@ function SettingsModal({ isOpen, onClose, settings, updateSettings }) {
                     </div>
                 </div>
 
+                {/* Theme Mode */}
+                <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                    <label style={{ display: 'block', marginBottom: 'var(--spacing-sm)', fontWeight: '600' }}>Theme Mode</label>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-md)', background: 'var(--color-surface)', padding: '4px', borderRadius: 'var(--border-radius-full)' }}>
+                        <button
+                            onClick={() => updateSettings('themeMode', 'dark')}
+                            style={{
+                                flex: 1,
+                                padding: '8px',
+                                borderRadius: 'var(--border-radius-full)',
+                                border: 'none',
+                                background: settings.themeMode === 'dark' ? 'var(--color-primary)' : 'transparent',
+                                color: settings.themeMode === 'dark' ? '#000' : 'var(--color-text-secondary)',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            Dark
+                        </button>
+                        <button
+                            onClick={() => updateSettings('themeMode', 'light')}
+                            style={{
+                                flex: 1,
+                                padding: '8px',
+                                borderRadius: 'var(--border-radius-full)',
+                                border: 'none',
+                                background: settings.themeMode === 'light' ? 'var(--color-primary)' : 'transparent',
+                                color: settings.themeMode === 'light' ? '#000' : 'var(--color-text-secondary)',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            Light
+                        </button>
+                    </div>
+                </div>
+
                 {/* Dynamic Background Toggle */}
                 <div style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Dynamic Background</label>
