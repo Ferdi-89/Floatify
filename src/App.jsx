@@ -6,6 +6,7 @@ import Lyrics from './components/Lyrics';
 import SettingsModal from './components/SettingsModal';
 import useSpotifyCurrentTrack from './components/useSpotifyCurrentTrack';
 import useDocumentPiP from './components/useDocumentPiP';
+import Toast from './components/Toast';
 import { Settings, ExternalLink, Minimize2, LogOut, Maximize2 } from 'lucide-react';
 import { FastAverageColor } from 'fast-average-color';
 
@@ -17,6 +18,7 @@ function App() {
   const [isMini, setIsMini] = useState(false);
   const { pipWindow, requestPiP, closePiP } = useDocumentPiP();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [toast, setToast] = useState(null); // State for toast notifications
 
   useEffect(() => {
     const handleResize = () => {
@@ -119,7 +121,11 @@ function App() {
       });
 
       if (response.status === 403) {
-        alert("Maaf, fitur kontrol (Play/Pause/Next) hanya tersedia untuk akun Spotify Premium.");
+        // Replaced alert with professional Toast
+        setToast({
+          message: "Premium required for playback control.",
+          type: 'error'
+        });
       }
     } catch (error) {
       console.error("Error controlling playback:", error);
@@ -521,6 +527,15 @@ function App() {
           </>
         )}
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
 
       {/* Settings Modal */}
       <SettingsModal
