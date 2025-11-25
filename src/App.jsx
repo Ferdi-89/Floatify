@@ -624,22 +624,27 @@ function App() {
 
       {/* Mini Mode Exit Button */}
       {isMini && !pipWindow && (
-        <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 50 }}>
+        <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 50 }}>
           <button
             onClick={() => setIsMini(false)}
             className="glass-panel"
             style={{
               borderRadius: '50%',
-              width: '32px',
-              height: '32px',
+              width: '40px',
+              height: '40px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'var(--color-text-primary)',
-              background: 'rgba(0,0,0,0.5)'
+              background: settings.themeMode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.6)',
+              border: settings.themeMode === 'light' ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.1)',
+              boxShadow: settings.themeMode === 'light' ? '0 4px 12px rgba(0,0,0,0.1)' : '0 44px 12px rgba(0,0,0,0.3)',
+              transition: 'all 0.2s ease'
             }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
-            <Maximize2 size={16} />
+            <Maximize2 size={20} />
           </button>
         </div>
       )}
