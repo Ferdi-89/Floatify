@@ -18,6 +18,7 @@ const TEXT_SIZES = [
 const ALIGNMENTS = [
     { name: 'Left', value: 'left' },
     { name: 'Center', value: 'center' },
+    { name: 'Right', value: 'right' },
 ];
 
 function SettingsModal({ isOpen, onClose, settings, updateSettings }) {
@@ -225,7 +226,7 @@ function SettingsModal({ isOpen, onClose, settings, updateSettings }) {
                 <div style={{ marginBottom: 'var(--spacing-lg)' }}>
                     <label style={{ display: 'block', marginBottom: 'var(--spacing-sm)', color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Font Family</label>
                     <div style={{ display: 'flex', gap: 'var(--spacing-xs)', background: 'var(--color-surface)', padding: '4px', borderRadius: 'var(--border-radius-md)', overflowX: 'auto' }}>
-                        {['Inter', 'Roboto', 'Serif', 'Mono'].map((font) => (
+                        {['Inter', 'Roboto', 'Lora', 'JetBrains Mono'].map((font) => (
                             <button
                                 key={font}
                                 onClick={() => updateSettings('fontFamily', font)}
@@ -236,10 +237,11 @@ function SettingsModal({ isOpen, onClose, settings, updateSettings }) {
                                     backgroundColor: settings.fontFamily === font ? 'var(--color-surface-hover)' : 'transparent',
                                     color: settings.fontFamily === font ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                                     fontSize: '0.875rem',
-                                    fontFamily: font === 'Mono' ? 'monospace' : font === 'Serif' ? 'serif' : font
+                                    fontFamily: font,
+                                    whiteSpace: 'nowrap'
                                 }}
                             >
-                                {font}
+                                {font === 'JetBrains Mono' ? 'Mono' : font}
                             </button>
                         ))}
                     </div>
