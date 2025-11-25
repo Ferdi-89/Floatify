@@ -145,8 +145,8 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 fontWeight: '700',
                 linePaddingTop: '50px',
                 linePaddingBottom: '50px',
-                linePaddingRight: isCenter ? 'var(--spacing-2xl)' : 'var(--spacing-4_5xl)', // Balanced padding for center
-                marginLeft: isCenter ? '0' : '200px' // Remove margin for center
+                linePaddingRight: isCenter ? '10vw' : '15vw', // Responsive padding
+                marginLeft: isCenter ? '0' : '10vw' // Responsive margin
             };
         }
     };
@@ -220,7 +220,10 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                             transformOrigin: lyricsAlign === 'center' ? 'center' : 'left center',
                             cursor: 'default',
                             textShadow: textShadow,
-                            willChange: 'transform, opacity, filter' // Hint for GPU acceleration
+                            willChange: 'transform, opacity, filter', // Hint for GPU acceleration
+                            maxWidth: '100%',
+                            overflowWrap: 'break-word',
+                            wordBreak: 'break-word'
                         }}
                     >
                         {line.text}
