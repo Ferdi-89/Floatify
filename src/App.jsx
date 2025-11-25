@@ -16,34 +16,38 @@ const fac = new FastAverageColor();
 function App() {
   const { token, login, logout } = useAuth();
   const { currentTrack, progress, isPlaying } = useSpotifyCurrentTrack(token, logout);
-  const [isMini, setIsMini] = useState(false);
   const { pipWindow, requestPiP, closePiP } = useDocumentPiP();
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [toast, setToast] = useState(null); // State for toast notifications
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // UI State
+  const [isMini, setIsMini] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isLandscape, setIsLandscape] = useState(window.innerHeight < window.innerWidth);
+  const [toast, setToast] = useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [bgColor, setBgColor] = useState('#09090b');
 
   // Settings State
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settings, setSettings] = useState({
     themeColor: '#1db954',
     lyricsSize: '1.5rem',
     lyricsAlign: 'left',
     dynamicBackground: false,
-    themeMode: 'dark' // Default to dark mode
+    themeMode: 'dark'
   });
 
-  // Profile State
-  const [profile, setProfile] = useState(null);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  // Handle Resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setIsLandscape(window.innerHeight < window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  // Fetch Profile Data
+  // Fetch Profile
   useEffect(() => {
     if (token) {
       fetch('https://api.spotify.com/v1/me', {
@@ -55,10 +59,7 @@ function App() {
     }
   }, [token]);
 
-  // Dynamic Background State
-  const [bgColor, setBgColor] = useState('#09090b');
-
-  // Apply theme color
+  // Apply Theme Color
   useEffect(() => {
     document.documentElement.style.setProperty('--color-primary', settings.themeColor);
   }, [settings.themeColor]);
@@ -70,7 +71,6 @@ function App() {
 
     if (settings.dynamicBackground && currentTrack?.album?.images[0]?.url) {
       const imageUrl = currentTrack.album.images[0].url;
-
       const img = new Image();
       img.crossOrigin = "Anonymous";
       img.src = imageUrl;
@@ -78,20 +78,16 @@ function App() {
       img.onload = () => {
         try {
           const color = fac.getColor(img);
-
           let r, g, b;
           if (isLight) {
-            // Light Mode: Mix with white (0.9 factor) for pastel look
             r = Math.floor(color.value[0] * 0.1 + 255 * 0.9);
             g = Math.floor(color.value[1] * 0.1 + 255 * 0.9);
             b = Math.floor(color.value[2] * 0.1 + 255 * 0.9);
           } else {
-            // Dark Mode: Mix with black (0.2 factor) for dark look
             r = Math.floor(color.value[0] * 0.2);
             g = Math.floor(color.value[1] * 0.2);
             b = Math.floor(color.value[2] * 0.2);
           }
-
           setBgColor(`rgb(${r}, ${g}, ${b})`);
         } catch (e) {
           console.error("Error extracting color", e);
@@ -103,35 +99,25 @@ function App() {
     }
   }, [settings.dynamicBackground, settings.themeMode, currentTrack?.album?.images]);
 
-  // Apply background color and theme variables
+  // Apply Background & Theme Variables
   useEffect(() => {
     const isLight = settings.themeMode === 'light';
-
     document.documentElement.style.setProperty('--color-background', bgColor);
 
-    // Surface colors
     if (isLight) {
       document.documentElement.style.setProperty('--color-surface', `color-mix(in srgb, ${bgColor}, black 5%)`);
       document.documentElement.style.setProperty('--color-surface-hover', `color-mix(in srgb, ${bgColor}, black 10%)`);
-
-      // Text Colors
       document.documentElement.style.setProperty('--color-text-primary', '#000000');
-      document.documentElement.style.setProperty('--color-text-secondary', '#52525b'); // Zinc-600
-      document.documentElement.style.setProperty('--color-text-muted', '#71717a'); // Zinc-500
-
-      // Glass Effect
+      document.documentElement.style.setProperty('--color-text-secondary', '#52525b');
+      document.documentElement.style.setProperty('--color-text-muted', '#71717a');
       document.documentElement.style.setProperty('--glass-background', 'rgba(255, 255, 255, 0.8)');
       document.documentElement.style.setProperty('--glass-border', 'rgba(0, 0, 0, 0.1)');
     } else {
       document.documentElement.style.setProperty('--color-surface', `color-mix(in srgb, ${bgColor}, white 5%)`);
       document.documentElement.style.setProperty('--color-surface-hover', `color-mix(in srgb, ${bgColor}, white 10%)`);
-
-      // Text Colors
       document.documentElement.style.setProperty('--color-text-primary', '#ffffff');
-      document.documentElement.style.setProperty('--color-text-secondary', '#a1a1aa'); // Zinc-400
-      document.documentElement.style.setProperty('--color-text-muted', '#71717a'); // Zinc-500
-
-      // Glass Effect
+      document.documentElement.style.setProperty('--color-text-secondary', '#a1a1aa');
+      document.documentElement.style.setProperty('--color-text-muted', '#71717a');
       document.documentElement.style.setProperty('--glass-background', 'rgba(24, 24, 27, 0.95)');
       document.documentElement.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.08)');
     }
@@ -143,59 +129,37 @@ function App() {
 
   const handleControl = async (command) => {
     if (!token) return;
-
     let endpoint = '';
     let method = 'POST';
 
     switch (command) {
-      case 'next':
-        endpoint = 'https://api.spotify.com/v1/me/player/next';
-        break;
-      case 'previous':
-        endpoint = 'https://api.spotify.com/v1/me/player/previous';
-        break;
-      case 'play':
-        endpoint = 'https://api.spotify.com/v1/me/player/play';
-        method = 'PUT';
-        break;
-      case 'pause':
-        endpoint = 'https://api.spotify.com/v1/me/player/pause';
-        method = 'PUT';
-        break;
-      default:
-        return;
+      case 'next': endpoint = 'https://api.spotify.com/v1/me/player/next'; break;
+      case 'previous': endpoint = 'https://api.spotify.com/v1/me/player/previous'; break;
+      case 'play': endpoint = 'https://api.spotify.com/v1/me/player/play'; method = 'PUT'; break;
+      case 'pause': endpoint = 'https://api.spotify.com/v1/me/player/pause'; method = 'PUT'; break;
+      default: return;
     }
 
     try {
       const response = await fetch(endpoint, {
         method: method,
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-
       if (response.status === 403) {
-        // Replaced alert with professional Toast
-        setToast({
-          message: "Premium required for playback control.",
-          type: 'error'
-        });
+        setToast({ message: "Premium required for playback control.", type: 'error' });
       }
     } catch (error) {
       console.error("Error controlling playback:", error);
     }
   };
 
-  const [isLandscape, setIsLandscape] = useState(window.innerHeight < window.innerWidth);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-      setIsLandscape(window.innerHeight < window.innerWidth);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const togglePiP = () => {
+    if (pipWindow) {
+      closePiP();
+    } else {
+      requestPiP(350, 500);
+    }
+  };
 
   // Content for both Main Window and PiP Window
   const PlayerContent = (
@@ -216,8 +180,8 @@ function App() {
             left: 0,
             right: 0,
             padding: '16px',
-            paddingRight: '60px', // Added padding to avoid overlap with Exit button
-            background: 'transparent', // No dark shadow
+            paddingRight: '60px',
+            background: 'transparent',
             zIndex: 20,
             display: 'flex',
             alignItems: 'center',
@@ -253,8 +217,8 @@ function App() {
             overflowY: 'auto',
             scrollbarWidth: 'none',
             zIndex: 1,
-            paddingTop: '60px', // Space for top bar
-            paddingBottom: '100px' // Space for floating player
+            paddingTop: '60px',
+            paddingBottom: '100px'
           }}>
             <Lyrics
               currentTrack={currentTrack}
@@ -288,7 +252,7 @@ function App() {
                 isPlaying={isPlaying}
                 isMini={true}
                 onControl={handleControl}
-                showInfo={false} // Hide info in the bottom bar
+                showInfo={false}
               />
             </div>
           </div>
@@ -309,7 +273,7 @@ function App() {
                   alignItems: 'center',
                   padding: 'var(--spacing-md)',
                   zIndex: 10,
-                  background: 'rgba(0,0,0,0.2)' // Slight tint to separate
+                  background: 'rgba(0,0,0,0.2)'
                 }}>
                   <img
                     src={currentTrack?.album.images[0]?.url}
@@ -363,12 +327,12 @@ function App() {
                 {/* Mobile Top Bar: Track Info */}
                 <div style={{
                   padding: 'var(--spacing-md)',
-                  paddingRight: '140px', // Added large padding to avoid overlap with 3 floating buttons
+                  paddingRight: '140px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 'var(--spacing-md)',
                   zIndex: 10,
-                  background: 'transparent' // Removed dark gradient shadow
+                  background: 'transparent'
                 }}>
                   <img
                     src={currentTrack?.album.images[0]?.url}
@@ -410,7 +374,7 @@ function App() {
                 {/* Mobile Bottom Bar: Controls Only */}
                 <div style={{
                   padding: 'var(--spacing-md)',
-                  paddingBottom: 'var(--spacing-xl)', // Extra padding for mobile bottom nav area
+                  paddingBottom: 'var(--spacing-xl)',
                   display: 'flex',
                   justifyContent: 'center'
                 }}>
@@ -419,7 +383,7 @@ function App() {
                     isPlaying={isPlaying}
                     isMini={false}
                     onControl={handleControl}
-                    showInfo={false} // Hide info, show only controls
+                    showInfo={false}
                   />
                 </div>
               </>
@@ -430,7 +394,7 @@ function App() {
               <div style={{
                 flex: 1,
                 minHeight: 0,
-                overflow: 'hidden', // Hidden for proper scroll behavior
+                overflow: 'hidden',
                 position: 'relative'
               }}>
                 <Lyrics
@@ -464,7 +428,7 @@ function App() {
 
   return (
     <div className="app-container" style={{
-      height: '100dvh', // Use dynamic viewport height for mobile
+      height: '100dvh',
       display: 'flex',
       flexDirection: 'column',
       backgroundColor: 'var(--color-background)',
@@ -529,10 +493,9 @@ function App() {
         </header>
       )}
 
-      {/* Mobile Floating Controls (Settings, Mini Mode, Logout) - Mimics Mini Mode Logic */}
+      {/* Mobile Floating Controls */}
       {isMobile && !isMini && !pipWindow && token && (
         <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 50, display: 'flex', gap: '8px' }}>
-          {/* Profile Button Mobile */}
           <button
             onClick={() => setIsProfileOpen(true)}
             className="glass-panel"
@@ -633,7 +596,7 @@ function App() {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        padding: isMobile ? '0' : 'var(--spacing-lg)', // Remove padding on mobile to prevent layout issues
+        padding: isMobile ? '0' : 'var(--spacing-lg)',
         position: 'relative',
         overflow: 'hidden'
       }}>
@@ -669,9 +632,8 @@ function App() {
                   flexDirection: 'column',
                   backgroundColor: 'var(--color-background)',
                   color: 'var(--color-text-primary)',
-                  fontFamily: 'var(--font-family, sans-serif)' // Ensure font carries over
+                  fontFamily: 'var(--font-family, sans-serif)'
                 }}>
-                  {/* Inject CSS variables into PiP window */}
                   <style>{`
                     :root {
                       --color-background: ${bgColor};
