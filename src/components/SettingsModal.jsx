@@ -220,6 +220,87 @@ function SettingsModal({ isOpen, onClose, settings, updateSettings }) {
                         ))}
                     </div>
                 </div>
+
+                {/* Font Family */}
+                <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                    <label style={{ display: 'block', marginBottom: 'var(--spacing-sm)', color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Font Family</label>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-xs)', background: 'var(--color-surface)', padding: '4px', borderRadius: 'var(--border-radius-md)', overflowX: 'auto' }}>
+                        {['Inter', 'Roboto', 'Serif', 'Mono'].map((font) => (
+                            <button
+                                key={font}
+                                onClick={() => updateSettings('fontFamily', font)}
+                                style={{
+                                    flex: 1,
+                                    padding: '8px',
+                                    borderRadius: 'var(--border-radius-sm)',
+                                    backgroundColor: settings.fontFamily === font ? 'var(--color-surface-hover)' : 'transparent',
+                                    color: settings.fontFamily === font ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                                    fontSize: '0.875rem',
+                                    fontFamily: font === 'Mono' ? 'monospace' : font === 'Serif' ? 'serif' : font
+                                }}
+                            >
+                                {font}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Font Style & Glow */}
+                <div style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', gap: 'var(--spacing-lg)' }}>
+                    {/* Italic Toggle */}
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Italic Style</label>
+                        <button
+                            onClick={() => updateSettings('fontStyle', settings.fontStyle === 'italic' ? 'normal' : 'italic')}
+                            style={{
+                                width: '48px',
+                                height: '24px',
+                                backgroundColor: settings.fontStyle === 'italic' ? 'var(--color-primary)' : 'var(--color-surface-hover)',
+                                borderRadius: 'var(--border-radius-full)',
+                                position: 'relative',
+                                transition: 'background-color 0.2s'
+                            }}
+                        >
+                            <div style={{
+                                width: '20px',
+                                height: '20px',
+                                backgroundColor: 'white',
+                                borderRadius: '50%',
+                                position: 'absolute',
+                                top: '2px',
+                                left: settings.fontStyle === 'italic' ? '26px' : '2px',
+                                transition: 'left 0.2s'
+                            }} />
+                        </button>
+                    </div>
+
+                    {/* Glow Toggle */}
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Glow Effect</label>
+                        <button
+                            onClick={() => updateSettings('glowEnabled', !settings.glowEnabled)}
+                            style={{
+                                width: '48px',
+                                height: '24px',
+                                backgroundColor: settings.glowEnabled ? 'var(--color-primary)' : 'var(--color-surface-hover)',
+                                borderRadius: 'var(--border-radius-full)',
+                                position: 'relative',
+                                transition: 'background-color 0.2s'
+                            }}
+                        >
+                            <div style={{
+                                width: '20px',
+                                height: '20px',
+                                backgroundColor: 'white',
+                                borderRadius: '50%',
+                                position: 'absolute',
+                                top: '2px',
+                                left: settings.glowEnabled ? '26px' : '2px',
+                                transition: 'left 0.2s'
+                            }} />
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );

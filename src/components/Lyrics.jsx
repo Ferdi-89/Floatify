@@ -190,6 +190,21 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 const scale = isActive ? styles.activeScale : 0.95;
                 const fontWeight = isActive ? styles.fontWeight : '500';
 
+                // Glow Logic
+                let textShadow = 'none';
+                if (isActive && !isMini && settings?.glowEnabled) {
+                    if (settings.themeMode === 'light') {
+                        // Light Mode: Subtle dark glow/shadow for contrast
+                        textShadow = '0 0 12px rgba(0,0,0,0.2), 0 0 24px rgba(0,0,0,0.1)';
+                    } else {
+                        // Dark Mode: Strong white/primary glow
+                        textShadow = '0 0 20px rgba(255,255,255,0.4), 0 0 40px rgba(255,255,255,0.2)';
+                    }
+                } else if (isActive && !isMini) {
+                    // Default subtle shadow if glow is disabled but active (optional, keeping existing behavior if any)
+                    textShadow = settings.themeMode === 'light' ? 'none' : '0 0 30px rgba(255,255,255,0.15)';
+                }
+
                 return (
                     <p
                         key={index}
@@ -199,18 +214,20 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                             lineHeight: '1.3',
                             color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                             fontWeight: fontWeight,
+                            fontFamily: settings?.fontFamily === 'Mono' ? 'monospace' : settings?.fontFamily === 'Serif' ? 'serif' : settings?.fontFamily || 'inherit',
+                            fontStyle: settings?.fontStyle || 'normal',
                             margin: `${styles.spacing} 0`,
                             paddingTop: styles.linePaddingTop,
                             paddingBottom: styles.linePaddingBottom,
                             paddingLeft: 'var(--spacing-sm)',
                             paddingRight: styles.linePaddingRight,
-                            transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease',
+                            transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease, text-shadow 0.3s ease, font-variation-settings 0.3s ease',
                             opacity: opacity,
                             filter: `blur(${blur}px)`,
                             transform: `scale(${scale})`,
                             transformOrigin: lyricsAlign === 'center' ? 'center' : 'left center',
                             cursor: 'default',
-                            textShadow: isActive && !isMini ? '0 0 30px rgba(255,255,255,0.15)' : 'none'
+                            textShadow: textShadow
                         }}
                     >
                         {line.text}

@@ -35,7 +35,10 @@ function App() {
     lyricsAlign: 'left',
     dynamicBackground: false,
     themeMode: 'dark',
-    hideControls: false
+    hideControls: false,
+    fontFamily: 'Inter',
+    fontStyle: 'normal', // normal, italic
+    glowEnabled: true
   });
 
   // Handle Resize
