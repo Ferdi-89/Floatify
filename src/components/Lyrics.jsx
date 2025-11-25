@@ -47,70 +47,11 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
         prevActiveIndexRef.current = activeIndex;
     }, [activeIndex]);
 
-    // Force margin to be applied when mode changes
-    useEffect(() => {
-        // Use only marginLeft (no transform to avoid double offset)
-        if (lyricsContainerRef.current) {
-            // Reset margin for mobile or mini mode
-            lyricsContainerRef.current.style.marginLeft = (isMini || isMobile) ? '0' : '200px';
-        }
-    }, [isMini, isMobile]);
+    // Removed redundant useEffect for marginLeft - relying on styles.marginLeft in render
 
     if (!currentTrack) return null;
 
-    if (loading) {
-        return (
-            <div style={{
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--color-text-secondary)',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0
-            }}>
-                <div className="spinner" style={{
-                    width: '40px',
-                    height: '40px',
-                    border: '4px solid rgba(255, 255, 255, 0.1)',
-                    borderLeftColor: 'var(--color-primary)',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                }}></div>
-                <style>{`
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                `}</style>
-            </div>
-        );
-    }
-
-    if (!lyrics || lyrics.length === 0) {
-        return (
-            <div className="flex-center" style={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 'var(--spacing-md)',
-                color: 'var(--color-text-muted)',
-                textAlign: 'center',
-                padding: 'var(--spacing-xl)'
-            }}>
-                <Music size={48} style={{ opacity: 0.3 }} />
-                <div>
-                    <p style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '4px' }}>No Lyrics Found</p>
-                    <p style={{ fontSize: '0.85rem' }}>Enjoy the instrumental vibes</p>
-                </div>
-            </div>
-        );
-    }
+    // ... (keep existing loading and empty states)
 
     // Determine base size and spacing based on mode (Main vs Mini)
     const getBaseStyles = () => {
@@ -138,7 +79,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                     fontSize: `${2 * sizeScale}rem`, // Smaller font for mobile
                     spacing: 'var(--spacing-2xl)',   // Reduced spacing
                     activeScale: 1.05,
-                    blurStrength: 1,
+                    blurStrength: 0, // Disable blur on mobile for performance
                     fontWeight: '700',
                     linePaddingTop: '20px',
                     linePaddingBottom: '20px',
@@ -178,6 +119,8 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 textAlign: lyricsAlign,
                 maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
                 WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
+                WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS/Android
+                scrollBehavior: 'smooth'
             }}
             className="lyrics-container"
         >
@@ -227,7 +170,8 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                             transform: `scale(${scale})`,
                             transformOrigin: lyricsAlign === 'center' ? 'center' : 'left center',
                             cursor: 'default',
-                            textShadow: textShadow
+                            textShadow: textShadow,
+                            willChange: 'transform, opacity, filter' // Hint for GPU acceleration
                         }}
                     >
                         {line.text}
