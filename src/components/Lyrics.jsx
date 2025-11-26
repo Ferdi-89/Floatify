@@ -110,7 +110,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
             // Pop-out / Mini Mode
             return {
                 fontSize: `${1.5 * sizeScale}rem`,
-                spacing: 'var(--spacing-md)',
+                spacing: 'var(--spacing-2xl)',
                 activeScale: 1.05,
                 blurStrength: 2,
                 fontWeight: '700',
@@ -138,7 +138,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
             // Desktop Main Window: LARGE FONT with balanced spacing
             return {
                 fontSize: `${3.5 * sizeScale}rem`,
-                spacing: 'var(--spacing-xl)', // Restored to reasonable gap
+                spacing: 'var(--spacing-4_5xl)', // 300px vertical gap
                 activeScale: 1.05,
                 blurStrength: 2,
                 fontWeight: '700',
@@ -219,7 +219,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                             paddingBottom: styles.linePaddingBottom,
                             paddingLeft: styles.linePaddingLeft || 'var(--spacing-sm)', // Use dynamic padding
                             paddingRight: styles.linePaddingRight,
-                            transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease, filter 0.3s ease, text-shadow 0.3s ease', // Faster transition
+                            transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease, text-shadow 0.3s ease, font-variation-settings 0.3s ease',
                             opacity: opacity,
                             filter: `blur(${blur}px)`,
                             transform: `scale(${scale})`,

@@ -64,14 +64,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const logout = () => {
-    setToken(null);
-    window.localStorage.removeItem("token");
-    window.localStorage.removeItem("verifier");
-    window.localStorage.removeItem("refresh_token");
-    window.localStorage.removeItem("expires_at");
-  };
-
   const handleTokenResponse = (response) => {
     const { access_token, refresh_token, expires_in } = response;
     const expiresAt = Date.now() + expires_in * 1000;
@@ -165,8 +157,16 @@ export const AuthProvider = ({ children }) => {
     document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
   };
 
+  const logout = () => {
+    setToken(null);
+    window.localStorage.removeItem("token");
+    window.localStorage.removeItem("verifier");
+    window.localStorage.removeItem("refresh_token");
+    window.localStorage.removeItem("expires_at");
+  };
+
   return (
-    <AuthContext.Provider value={{ token, login, logout, setManualToken: handleTokenResponse }}>
+    <AuthContext.Provider value={{ token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

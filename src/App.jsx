@@ -15,10 +15,8 @@ import { FastAverageColor } from 'fast-average-color';
 
 const fac = new FastAverageColor();
 
-
-
 function App() {
-  const { token, login, logout, setManualToken } = useAuth();
+  const { token, login, logout } = useAuth();
   const { currentTrack, progress, isPlaying } = useSpotifyCurrentTrack(token, logout);
   const { pipWindow, requestPiP, closePiP } = useDocumentPiP();
 
@@ -31,19 +29,6 @@ function App() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profile, setProfile] = useState(null);
   const [bgColor, setBgColor] = useState('#09090b');
-
-  // Settings State
-  const [settings, setSettings] = useState({
-    themeMode: 'dark', // 'light' | 'dark'
-    themeColor: '#1db954', // Default Spotify Green
-    dynamicBackground: true,
-    lyricsSize: '1.5rem', // Default to Medium (matches SettingsModal value)
-    lyricsAlign: 'left', // Default alignment
-    hideControls: false, // Auto-hide controls
-    fontFamily: 'Inter', // Default font
-    fontStyle: 'normal', // 'normal' | 'italic'
-    glowEnabled: false // true | false
-  });
 
   // PWA Install State
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -72,32 +57,6 @@ function App() {
       try {
         const connection = await request.start();
         setToast({ message: "Casting to external display...", type: 'success' });
-
-        // Send token to receiver immediately
-        connection.addEventListener('connect', () => {
-          // Wait for handshake or send immediately (hybrid approach)
-          connection.send(JSON.stringify({ type: 'AUTH_TOKEN', token: token }));
-        });
-
-        // Listen for Handshake from Receiver
-        connection.addEventListener('message', (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.type === 'RECEIVER_READY') {
-              console.log("📺 Receiver is ready, sending token...");
-              connection.send(JSON.stringify({ type: 'AUTH_TOKEN', token: token }));
-              setToast({ message: "Connected to TV!", type: 'success' });
-            }
-          } catch (e) {
-            console.error("Sender message error", e);
-          }
-        });
-
-        // Also send if already connected (race condition)
-        if (connection.state === 'connected') {
-          connection.send(JSON.stringify({ type: 'AUTH_TOKEN', token: token }));
-        }
-
       } catch (error) {
         if (error.name !== 'NotFoundError' && error.name !== 'AbortError') {
           console.error("Cast failed", error);
@@ -109,31 +68,36 @@ function App() {
     }
   };
 
-  // Receiver Logic: Listen for Token & Handshake
-  useEffect(() => {
-    if (navigator.presentation && navigator.presentation.receiver) {
-      navigator.presentation.receiver.connectionList.then(list => {
-        list.connections.forEach(connection => {
-          // 1. Send Handshake "I am Ready"
-          connection.send(JSON.stringify({ type: 'RECEIVER_READY' }));
+  // Settings State
+  const [settings, setSettings] = useState(() => {
+    const saved = localStorage.getItem('floatify_settings');
+    return saved ? JSON.parse(saved) : {
+      themeColor: '#1db954',
+      lyricsSize: '1.5rem',
+      lyricsAlign: 'left',
+      dynamicBackground: false,
+      themeMode: 'dark',
+      hideControls: false,
+      fontFamily: 'Inter',
+      fontStyle: 'normal',
+      glowEnabled: true
+    };
+  });
 
-          connection.addEventListener('message', event => {
-            try {
-              const data = JSON.parse(event.data);
-              if (data.type === 'AUTH_TOKEN' && data.token) {
-                // Manually set token to skip login
-                setManualToken({ access_token: data.token, expires_in: 3600 });
-                // setIsMini(true); // Removed to allow Main Window on Cast
-                setToast({ message: "Logged in via Cast!", type: 'success' });
-              }
-            } catch (e) {
-              console.error("Error parsing cast message", e);
-            }
-          });
-        });
-      });
-    }
-  }, [setManualToken]);
+  // Persist Settings
+  useEffect(() => {
+    localStorage.setItem('floatify_settings', JSON.stringify(settings));
+  }, [settings]);
+
+  // Handle Resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setIsLandscape(window.innerHeight < window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch Profile
   useEffect(() => {
@@ -383,7 +347,7 @@ function App() {
                 borderRadius: 'var(--border-radius-full)',
                 padding: '8px 24px',
                 boxShadow: settings.themeMode === 'light' ? '0 8px 32px rgba(0,0,0,0.15)' : '0 8px 32px rgba(0,0,0,0.5)', // Softer shadow
-                border: 'none',
+                border: '1px solid var(--glass-border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -531,7 +495,7 @@ function App() {
               {/* Player at Bottom */}
               <div style={{
                 padding: 'var(--spacing-md)',
-                borderTop: 'none',
+                borderTop: '1px solid var(--color-border)',
                 visibility: settings.hideControls ? 'hidden' : 'visible',
                 opacity: settings.hideControls ? 0 : 1,
                 transition: 'all 0.3s ease'
@@ -561,7 +525,6 @@ function App() {
       overflow: 'hidden',
       transition: 'background-color 0.5s ease'
     }}>
-
       {/* Header (Only in Main Window, Non-Mini Mode, Desktop Only) */}
       {!isMini && !pipWindow && !isMobile && (
         <header style={{
@@ -584,32 +547,12 @@ function App() {
             {token && (
               <>
                 {/* Profile Button */}
-                <button
-                  onClick={() => setIsProfileOpen(true)}
-                  title="Profile"
-                  style={{
-                    padding: '4px 12px 4px 4px',
-                    color: 'var(--color-text-primary)',
-                    background: 'var(--color-surface)',
-                    borderRadius: 'var(--border-radius-full)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    border: '1px solid var(--color-border)',
-                    fontSize: '0.875rem',
-                    fontWeight: '600'
-                  }}
-                >
+                <button onClick={() => setIsProfileOpen(true)} title="Profile" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   {profile?.images?.[0]?.url ? (
-                    <img src={profile.images[0].url} alt="Profile" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+                    <img src={profile.images[0].url} alt="Profile" style={{ width: '20px', height: '20px', borderRadius: '50%' }} />
                   ) : (
-                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--color-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <User size={14} />
-                    </div>
+                    <User size={20} />
                   )}
-                  <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {profile?.display_name || 'User'}
-                  </span>
                 </button>
 
                 <button onClick={handleCast} title="Cast to TV/Screen" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
@@ -756,7 +699,7 @@ function App() {
               color: 'var(--color-text-primary)',
               background: settings.themeMode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.6)',
               border: settings.themeMode === 'light' ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.1)',
-              boxShadow: settings.themeMode === 'light' ? '0 4px 12px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.3)',
+              boxShadow: settings.themeMode === 'light' ? '0 4px 12px rgba(0,0,0,0.1)' : '0 44px 12px rgba(0,0,0,0.3)',
               transition: 'all 0.2s ease'
             }}
             onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
@@ -781,7 +724,6 @@ function App() {
             <h2 style={{ fontSize: '2rem', fontWeight: '800', textAlign: 'center' }}>Music that floats<br />with you.</h2>
             <button
               onClick={login}
-              className="login-button"
               style={{
                 backgroundColor: 'var(--color-primary)',
                 color: 'black',
@@ -791,9 +733,7 @@ function App() {
                 fontSize: '1rem',
                 boxShadow: '0 4px 20px rgba(29, 185, 84, 0.3)',
                 transform: 'scale(1)',
-                transition: 'all 0.2s ease',
-                border: 'none',
-                outline: 'none'
+                transition: 'all 0.2s ease'
               }}
               onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
               onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}

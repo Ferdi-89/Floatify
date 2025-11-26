@@ -84,7 +84,7 @@ body {
 /* Utility Classes */
 .glass-panel {
   background: var(--glass-background);
-  border: none;
+  border: 1px solid var(--glass-border);
   /* Removed backdrop-filter */
 }
 
