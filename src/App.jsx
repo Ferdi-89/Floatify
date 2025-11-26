@@ -32,6 +32,16 @@ function App() {
   const [profile, setProfile] = useState(null);
   const [bgColor, setBgColor] = useState('#09090b');
 
+  // Settings State
+  const [settings, setSettings] = useState({
+    themeMode: 'dark', // 'light' | 'dark'
+    themeColor: '#1db954', // Default Spotify Green
+    dynamicBackground: true,
+    lyricsSize: 'medium', // 'small' | 'medium' | 'large'
+    hideControls: false, // Auto-hide controls
+    fontFamily: 'Inter' // Default font
+  });
+
   // PWA Install State
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
