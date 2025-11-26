@@ -202,13 +202,19 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 }
 
                 // Spacing Logic
-                const spacingMode = settings?.lyricSpacing || 'compact';
-                // Reduced scale for tighter spacing as requested
-                const lineHeight = spacingMode === 'compact' ? '1.15' : spacingMode === 'wide' ? '1.6' : '1.35';
-                const marginMultiplier = spacingMode === 'compact' ? 0.3 : spacingMode === 'wide' ? 1.0 : 0.6;
+                let lineHeight, marginValue;
 
-                // Calculate dynamic margin based on spacing mode
-                const marginValue = `calc(${styles.spacing} * ${marginMultiplier})`;
+                if (isMini) {
+                    // Fixed tight spacing for Mini Mode (0px gap)
+                    lineHeight = '1.2';
+                    marginValue = '0px';
+                } else {
+                    // Main Window Logic based on settings
+                    const spacingMode = settings?.lyricSpacing || 'compact';
+                    lineHeight = spacingMode === 'compact' ? '1.15' : spacingMode === 'wide' ? '1.6' : '1.35';
+                    const marginMultiplier = spacingMode === 'compact' ? 0.3 : spacingMode === 'wide' ? 1.0 : 0.6;
+                    marginValue = `calc(${styles.spacing} * ${marginMultiplier})`;
+                }
 
                 return (
                     <p
@@ -257,7 +263,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
           display: none;
         }
       `}</style>
-        </div>
+        </div >
     );
 }
 
