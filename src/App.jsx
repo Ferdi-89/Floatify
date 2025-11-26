@@ -15,6 +15,36 @@ import { FastAverageColor } from 'fast-average-color';
 
 const fac = new FastAverageColor();
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    this.setState({ error, errorInfo });
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', color: 'red', background: 'black', height: '100vh', overflow: 'auto' }}>
+          <h1>Something went wrong.</h1>
+          <pre>{this.state.error && this.state.error.toString()}</pre>
+          <pre>{this.state.errorInfo && this.state.errorInfo.componentStack}</pre>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function App() {
   const { token, login, logout, setManualToken } = useAuth();
   const { currentTrack, progress, isPlaying } = useSpotifyCurrentTrack(token, logout);
@@ -545,238 +575,239 @@ function App() {
       overflow: 'hidden',
       transition: 'background-color 0.5s ease'
     }}>
-      {/* Header (Only in Main Window, Non-Mini Mode, Desktop Only) */}
-      {!isMini && !pipWindow && !isMobile && (
-        <header style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: 'var(--spacing-md) var(--spacing-lg)',
-          borderBottom: '1px solid var(--color-border)',
-          position: 'relative',
-          zIndex: 50,
-          background: 'var(--color-background)',
-          flexShrink: 0
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-primary)' }}></div>
-            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Floatify</h1>
-          </div>
+      <ErrorBoundary>
+        {/* Header (Only in Main Window, Non-Mini Mode, Desktop Only) */}
+        {!isMini && !pipWindow && !isMobile && (
+          <header style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 'var(--spacing-md) var(--spacing-lg)',
+            borderBottom: '1px solid var(--color-border)',
+            position: 'relative',
+            zIndex: 50,
+            background: 'var(--color-background)',
+            flexShrink: 0
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-primary)' }}></div>
+              <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Floatify</h1>
+            </div>
 
-          <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-            {token && (
-              <>
-                {/* Profile Button */}
-                <button onClick={() => setIsProfileOpen(true)} title="Profile" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
-                  {profile?.images?.[0]?.url ? (
-                    <img src={profile.images[0].url} alt="Profile" style={{ width: '20px', height: '20px', borderRadius: '50%' }} />
-                  ) : (
-                    <User size={20} />
-                  )}
-                </button>
-
-                <button onClick={handleCast} title="Cast to TV/Screen" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
-                  <Cast size={20} />
-                </button>
-
-                {deferredPrompt && (
-                  <button onClick={handleInstallClick} title="Install App" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
-                    <Download size={20} />
+            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+              {token && (
+                <>
+                  {/* Profile Button */}
+                  <button onClick={() => setIsProfileOpen(true)} title="Profile" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                    {profile?.images?.[0]?.url ? (
+                      <img src={profile.images[0].url} alt="Profile" style={{ width: '20px', height: '20px', borderRadius: '50%' }} />
+                    ) : (
+                      <User size={20} />
+                    )}
                   </button>
-                )}
 
-                <button onClick={() => setIsSettingsOpen(true)} title="Settings" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
-                  <Settings size={20} />
-                </button>
+                  <button onClick={handleCast} title="Cast to TV/Screen" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                    <Cast size={20} />
+                  </button>
 
-                <button
-                  onClick={togglePiP}
-                  title={pipWindow ? "Close Pop-out" : "Pop-out Player"}
-                  style={{ padding: '8px', color: 'var(--color-text-secondary)' }}
-                >
-                  <ExternalLink size={20} />
-                </button>
+                  {deferredPrompt && (
+                    <button onClick={handleInstallClick} title="Install App" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                      <Download size={20} />
+                    </button>
+                  )}
 
-                <button onClick={() => setIsMini(true)} title="Mini Mode" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
-                  <Minimize2 size={20} />
-                </button>
+                  <button onClick={() => setIsSettingsOpen(true)} title="Settings" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                    <Settings size={20} />
+                  </button>
 
-                <div style={{ width: '1px', height: '24px', background: 'var(--color-border)', margin: '0 var(--spacing-xs)' }}></div>
+                  <button
+                    onClick={togglePiP}
+                    title={pipWindow ? "Close Pop-out" : "Pop-out Player"}
+                    style={{ padding: '8px', color: 'var(--color-text-secondary)' }}
+                  >
+                    <ExternalLink size={20} />
+                  </button>
 
-                <button onClick={logout} title="Logout" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
-                  <LogOut size={20} />
-                </button>
-              </>
-            )}
-          </div>
-        </header>
-      )}
+                  <button onClick={() => setIsMini(true)} title="Mini Mode" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                    <Minimize2 size={20} />
+                  </button>
 
-      {/* Mobile Header (Unified) */}
-      {isMobile && !isMini && !pipWindow && token && (
-        <header style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: 'var(--spacing-md)',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 50,
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)'
-        }}>
-          {/* Track Info (Left) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-            <img
-              src={currentTrack?.album.images[0]?.url}
-              alt="Album Art"
+                  <div style={{ width: '1px', height: '24px', background: 'var(--color-border)', margin: '0 var(--spacing-xs)' }}></div>
+
+                  <button onClick={logout} title="Logout" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                    <LogOut size={20} />
+                  </button>
+                </>
+              )}
+            </div>
+          </header>
+        )}
+
+        {/* Mobile Header (Unified) */}
+        {isMobile && !isMini && !pipWindow && token && (
+          <header style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 'var(--spacing-md)',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 50,
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%)'
+          }}>
+            {/* Track Info (Left) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+              <img
+                src={currentTrack?.album.images[0]?.url}
+                alt="Album Art"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: 'var(--border-radius-sm)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  objectFit: 'cover'
+                }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <span style={{ fontWeight: '700', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'white' }}>
+                  {currentTrack?.name || 'Floatify'}
+                </span>
+                <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {currentTrack?.artists?.[0]?.name || 'Ready to play'}
+                </span>
+              </div>
+            </div>
+
+            {/* Controls (Right) */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  background: 'rgba(255,255,255,0.1)',
+                  borderRadius: '50%',
+                  backdropFilter: 'blur(4px)'
+                }}
+              >
+                <Settings size={18} />
+              </button>
+              <button
+                onClick={() => setIsMini(true)}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  background: 'rgba(255,255,255,0.1)',
+                  borderRadius: '50%',
+                  backdropFilter: 'blur(4px)'
+                }}
+              >
+                <Minimize2 size={18} />
+              </button>
+              <button
+                onClick={logout}
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  background: 'rgba(255,255,255,0.1)',
+                  borderRadius: '50%',
+                  backdropFilter: 'blur(4px)'
+                }}
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
+          </header>
+        )}
+
+        {/* Mini Mode Exit Button */}
+        {isMini && !pipWindow && (
+          <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 50 }}>
+            <button
+              onClick={() => setIsMini(false)}
+              className="glass-panel"
               style={{
+                borderRadius: '50%',
                 width: '40px',
                 height: '40px',
-                borderRadius: 'var(--border-radius-sm)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                objectFit: 'cover'
-              }}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <span style={{ fontWeight: '700', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'white' }}>
-                {currentTrack?.name || 'Floatify'}
-              </span>
-              <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {currentTrack?.artists?.[0]?.name || 'Ready to play'}
-              </span>
-            </div>
-          </div>
-
-          {/* Controls (Right) */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              style={{
-                width: '36px',
-                height: '36px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'white',
-                background: 'rgba(255,255,255,0.1)',
-                borderRadius: '50%',
-                backdropFilter: 'blur(4px)'
-              }}
-            >
-              <Settings size={18} />
-            </button>
-            <button
-              onClick={() => setIsMini(true)}
-              style={{
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                background: 'rgba(255,255,255,0.1)',
-                borderRadius: '50%',
-                backdropFilter: 'blur(4px)'
-              }}
-            >
-              <Minimize2 size={18} />
-            </button>
-            <button
-              onClick={logout}
-              style={{
-                width: '36px',
-                height: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                background: 'rgba(255,255,255,0.1)',
-                borderRadius: '50%',
-                backdropFilter: 'blur(4px)'
-              }}
-            >
-              <LogOut size={18} />
-            </button>
-          </div>
-        </header>
-      )}
-
-      {/* Mini Mode Exit Button */}
-      {isMini && !pipWindow && (
-        <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 50 }}>
-          <button
-            onClick={() => setIsMini(false)}
-            className="glass-panel"
-            style={{
-              borderRadius: '50%',
-              width: '40px',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--color-text-primary)',
-              background: settings.themeMode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.6)',
-              border: settings.themeMode === 'light' ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.1)',
-              boxShadow: settings.themeMode === 'light' ? '0 4px 12px rgba(0,0,0,0.1)' : '0 44px 12px rgba(0,0,0,0.3)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <Maximize2 size={20} />
-          </button>
-        </div>
-      )}
-
-      {/* Main Content Area */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        padding: isMobile ? '0' : 'var(--spacing-lg)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {!token ? (
-          <div className="login-container" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, gap: 'var(--spacing-lg)' }}>
-            <h2 style={{ fontSize: '2rem', fontWeight: '800', textAlign: 'center' }}>Music that floats<br />with you.</h2>
-            <button
-              onClick={login}
-              className="login-button"
-              style={{
-                backgroundColor: 'var(--color-primary)',
-                color: 'black',
-                padding: '14px 32px',
-                borderRadius: 'var(--border-radius-full)',
-                fontWeight: 'bold',
-                fontSize: '1rem',
-                boxShadow: '0 4px 20px rgba(29, 185, 84, 0.3)',
-                transform: 'scale(1)',
-                transition: 'all 0.2s ease',
-                border: 'none',
-                outline: 'none'
+                color: 'var(--color-text-primary)',
+                background: settings.themeMode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.6)',
+                border: settings.themeMode === 'light' ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.1)',
+                boxShadow: settings.themeMode === 'light' ? '0 4px 12px rgba(0,0,0,0.1)' : '0 44px 12px rgba(0,0,0,0.3)',
+                transition: 'all 0.2s ease'
               }}
               onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
               onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
             >
-              Login with Spotify
+              <Maximize2 size={20} />
             </button>
           </div>
-        ) : (
-          <>
-            {pipWindow ? (
-              createPortal(
-                <div style={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  backgroundColor: 'var(--color-background)',
-                  color: 'var(--color-text-primary)',
-                  fontFamily: 'var(--font-family, sans-serif)'
-                }}>
-                  <style>{`
+        )}
+
+        {/* Main Content Area */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: isMobile ? '0' : 'var(--spacing-lg)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {!token ? (
+            <div className="login-container" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, gap: 'var(--spacing-lg)' }}>
+              <h2 style={{ fontSize: '2rem', fontWeight: '800', textAlign: 'center' }}>Music that floats<br />with you.</h2>
+              <button
+                onClick={login}
+                className="login-button"
+                style={{
+                  backgroundColor: 'var(--color-primary)',
+                  color: 'black',
+                  padding: '14px 32px',
+                  borderRadius: 'var(--border-radius-full)',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  boxShadow: '0 4px 20px rgba(29, 185, 84, 0.3)',
+                  transform: 'scale(1)',
+                  transition: 'all 0.2s ease',
+                  border: 'none',
+                  outline: 'none'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                Login with Spotify
+              </button>
+            </div>
+          ) : (
+            <>
+              {pipWindow ? (
+                createPortal(
+                  <div style={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    backgroundColor: 'var(--color-background)',
+                    color: 'var(--color-text-primary)',
+                    fontFamily: 'var(--font-family, sans-serif)'
+                  }}>
+                    <style>{`
                     :root {
                       --color-background: ${bgColor};
                       --color-surface: color-mix(in srgb, ${bgColor}, white 5%);
@@ -800,59 +831,60 @@ function App() {
                     ::-webkit-scrollbar-thumb { background: var(--color-surface-hover); border-radius: 4px; }
                     .glass-panel { background: rgba(24, 24, 27, 0.95); border: 1px solid var(--glass-border); }
                   `}</style>
-                  {PlayerContent}
-                </div>,
-                pipWindow.document.body
-              )
-            ) : (
-              PlayerContent
-            )}
+                    {PlayerContent}
+                  </div>,
+                  pipWindow.document.body
+                )
+              ) : (
+                PlayerContent
+              )}
 
-            {pipWindow && (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)', gap: 'var(--spacing-md)' }}>
-                <ExternalLink size={48} style={{ opacity: 0.5 }} />
-                <p>Playing in Pop-out Window</p>
-                <button
-                  onClick={closePiP}
-                  style={{
-                    padding: '8px 16px',
-                    background: 'var(--color-surface)',
-                    borderRadius: 'var(--border-radius-full)',
-                    color: 'var(--color-text-primary)',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  Restore Player
-                </button>
-              </div>
-            )}
-          </>
+              {pipWindow && (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)', gap: 'var(--spacing-md)' }}>
+                  <ExternalLink size={48} style={{ opacity: 0.5 }} />
+                  <p>Playing in Pop-out Window</p>
+                  <button
+                    onClick={closePiP}
+                    style={{
+                      padding: '8px 16px',
+                      background: 'var(--color-surface)',
+                      borderRadius: 'var(--border-radius-full)',
+                      color: 'var(--color-text-primary)',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    Restore Player
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Toast Notification */}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
         )}
-      </div>
 
-      {/* Toast Notification */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
+        {/* Settings Modal */}
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          settings={settings}
+          updateSettings={updateSettings}
         />
-      )}
 
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        settings={settings}
-        updateSettings={updateSettings}
-      />
-
-      {/* Profile Modal */}
-      <ProfileModal
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        profile={profile}
-      />
+        {/* Profile Modal */}
+        <ProfileModal
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          profile={profile}
+        />
+      </ErrorBoundary>
     </div>
   );
 }
