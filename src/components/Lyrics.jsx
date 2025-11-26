@@ -110,7 +110,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
             // Pop-out / Mini Mode
             return {
                 fontSize: `${1.5 * sizeScale}rem`,
-                spacing: 'var(--spacing-2xl)',
+                spacing: 'var(--spacing-md)',
                 activeScale: 1.05,
                 blurStrength: 2,
                 fontWeight: '700',
@@ -138,7 +138,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
             // Desktop Main Window: LARGE FONT with balanced spacing
             return {
                 fontSize: `${3.5 * sizeScale}rem`,
-                spacing: 'var(--spacing-4_5xl)', // 300px vertical gap
+                spacing: 'var(--spacing-xl)', // Restored to reasonable gap
                 activeScale: 1.05,
                 blurStrength: 2,
                 fontWeight: '700',

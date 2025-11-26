@@ -39,7 +39,9 @@ function App() {
     dynamicBackground: true,
     lyricsSize: 'medium', // 'small' | 'medium' | 'large'
     hideControls: false, // Auto-hide controls
-    fontFamily: 'Inter' // Default font
+    fontFamily: 'Inter', // Default font
+    fontStyle: 'normal', // 'normal' | 'italic'
+    glowEnabled: false // true | false
   });
 
   // PWA Install State
@@ -120,6 +122,7 @@ function App() {
               if (data.type === 'AUTH_TOKEN' && data.token) {
                 // Manually set token to skip login
                 setManualToken({ access_token: data.token, expires_in: 3600 });
+                setIsMini(true); // Force Mini Mode on Receiver
                 setToast({ message: "Logged in via Cast!", type: 'success' });
               }
             } catch (e) {
@@ -379,7 +382,7 @@ function App() {
                 borderRadius: 'var(--border-radius-full)',
                 padding: '8px 24px',
                 boxShadow: settings.themeMode === 'light' ? '0 8px 32px rgba(0,0,0,0.15)' : '0 8px 32px rgba(0,0,0,0.5)', // Softer shadow
-                border: '1px solid var(--glass-border)',
+                border: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -527,7 +530,7 @@ function App() {
               {/* Player at Bottom */}
               <div style={{
                 padding: 'var(--spacing-md)',
-                borderTop: '1px solid var(--color-border)',
+                borderTop: 'none',
                 visibility: settings.hideControls ? 'hidden' : 'visible',
                 opacity: settings.hideControls ? 0 : 1,
                 transition: 'all 0.3s ease'

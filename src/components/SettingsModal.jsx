@@ -45,7 +45,7 @@ function SettingsModal({ isOpen, onClose, settings, updateSettings }) {
                 borderRadius: 'var(--border-radius-lg)',
                 position: 'relative',
                 backgroundColor: 'var(--color-background)', // Use dynamic background
-                border: '1px solid var(--color-border)',
+                border: 'none',
                 boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
