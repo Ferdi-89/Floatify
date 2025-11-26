@@ -37,7 +37,8 @@ function App() {
     themeMode: 'dark', // 'light' | 'dark'
     themeColor: '#1db954', // Default Spotify Green
     dynamicBackground: true,
-    lyricsSize: 'medium', // 'small' | 'medium' | 'large'
+    lyricsSize: '1.5rem', // Default to Medium (matches SettingsModal value)
+    lyricsAlign: 'left', // Default alignment
     hideControls: false, // Auto-hide controls
     fontFamily: 'Inter', // Default font
     fontStyle: 'normal', // 'normal' | 'italic'
@@ -735,7 +736,7 @@ function App() {
               color: 'var(--color-text-primary)',
               background: settings.themeMode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.6)',
               border: settings.themeMode === 'light' ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.1)',
-              boxShadow: settings.themeMode === 'light' ? '0 4px 12px rgba(0,0,0,0.1)' : '0 44px 12px rgba(0,0,0,0.3)',
+              boxShadow: settings.themeMode === 'light' ? '0 4px 12px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.3)',
               transition: 'all 0.2s ease'
             }}
             onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}

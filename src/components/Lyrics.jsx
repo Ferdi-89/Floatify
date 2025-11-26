@@ -219,7 +219,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                             paddingBottom: styles.linePaddingBottom,
                             paddingLeft: styles.linePaddingLeft || 'var(--spacing-sm)', // Use dynamic padding
                             paddingRight: styles.linePaddingRight,
-                            transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease, text-shadow 0.3s ease, font-variation-settings 0.3s ease',
+                            transition: 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease, filter 0.3s ease, text-shadow 0.3s ease', // Faster transition
                             opacity: opacity,
                             filter: `blur(${blur}px)`,
                             transform: `scale(${scale})`,
