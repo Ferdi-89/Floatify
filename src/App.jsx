@@ -51,6 +51,17 @@ function App() {
     }
   };
 
+  // TV Remote Support: Auto-focus login button
+  const loginButtonRef = useRef(null);
+  useEffect(() => {
+    if (!token && loginButtonRef.current) {
+      // Small timeout to ensure render is complete
+      setTimeout(() => {
+        loginButtonRef.current?.focus();
+      }, 100);
+    }
+  }, [token]);
+
   const handleCast = async () => {
     if (window.PresentationRequest) {
       const request = new PresentationRequest(['/']); // Cast the current URL
@@ -723,7 +734,14 @@ function App() {
           <div className="login-container" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, gap: 'var(--spacing-lg)' }}>
             <h2 style={{ fontSize: '2rem', fontWeight: '800', textAlign: 'center' }}>Music that floats<br />with you.</h2>
             <button
+              ref={loginButtonRef}
               onClick={login}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  login();
+                }
+              }}
+              className="login-button"
               style={{
                 backgroundColor: 'var(--color-primary)',
                 color: 'black',
@@ -733,10 +751,22 @@ function App() {
                 fontSize: '1rem',
                 boxShadow: '0 4px 20px rgba(29, 185, 84, 0.3)',
                 transform: 'scale(1)',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                border: '2px solid transparent', // Prepare for focus border
+                outline: 'none' // Custom focus style
               }}
               onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
               onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              onFocus={(e) => {
+                e.currentTarget.style.transform = 'scale(1.1)';
+                e.currentTarget.style.boxShadow = '0 0 0 4px rgba(255, 255, 255, 0.5), 0 8px 25px rgba(29, 185, 84, 0.6)';
+                e.currentTarget.style.borderColor = 'white';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(29, 185, 84, 0.3)';
+                e.currentTarget.style.borderColor = 'transparent';
+              }}
             >
               Login with Spotify
             </button>
