@@ -96,7 +96,22 @@ function App() {
 
         // Send token to receiver immediately
         connection.addEventListener('connect', () => {
+          // Wait for handshake or send immediately (hybrid approach)
           connection.send(JSON.stringify({ type: 'AUTH_TOKEN', token: token }));
+        });
+
+        // Listen for Handshake from Receiver
+        connection.addEventListener('message', (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'RECEIVER_READY') {
+              console.log("📺 Receiver is ready, sending token...");
+              connection.send(JSON.stringify({ type: 'AUTH_TOKEN', token: token }));
+              setToast({ message: "Connected to TV!", type: 'success' });
+            }
+          } catch (e) {
+            console.error("Sender message error", e);
+          }
         });
 
         // Also send if already connected (race condition)
@@ -115,17 +130,21 @@ function App() {
     }
   };
 
-  // Receiver Logic: Listen for Token
+  // Receiver Logic: Listen for Token & Handshake
   useEffect(() => {
     if (navigator.presentation && navigator.presentation.receiver) {
       navigator.presentation.receiver.connectionList.then(list => {
         list.connections.forEach(connection => {
+          // 1. Send Handshake "I am Ready"
+          connection.send(JSON.stringify({ type: 'RECEIVER_READY' }));
+
           connection.addEventListener('message', event => {
             try {
               const data = JSON.parse(event.data);
               if (data.type === 'AUTH_TOKEN' && data.token) {
                 // Manually set token to skip login
                 setManualToken({ access_token: data.token, expires_in: 3600 });
+                setToast({ message: "Logged in via Cast!", type: 'success' });
               }
             } catch (e) {
               console.error("Error parsing cast message", e);
@@ -135,6 +154,16 @@ function App() {
       });
     }
   }, [setManualToken]);
+
+  // TV Remote Debugging: Visual Feedback
+  useEffect(() => {
+    const handleDebugKey = (e) => {
+      // Show toast for ANY key press to verify remote signal
+      setToast({ message: `Remote Key: ${e.key} (${e.code})`, type: 'info' });
+    };
+    window.addEventListener('keydown', handleDebugKey);
+    return () => window.removeEventListener('keydown', handleDebugKey);
+  }, []);
 
   // Settings State
   const [settings, setSettings] = useState(() => {
