@@ -51,42 +51,6 @@ function App() {
     }
   };
 
-  // TV Remote Support: Robust Focus Trapping
-  const loginButtonRef = useRef(null);
-
-  useEffect(() => {
-    if (!token) {
-      // 1. Initial Focus (Longer delay for TV webviews)
-      const initialFocusTimer = setTimeout(() => {
-        loginButtonRef.current?.focus();
-      }, 500);
-
-      // 2. Focus Trap Interval (Aggressive)
-      // Check periodically if focus is lost and reclaim it
-      const focusInterval = setInterval(() => {
-        if (document.activeElement !== loginButtonRef.current) {
-          loginButtonRef.current?.focus();
-        }
-      }, 2000);
-
-      // 3. Global Key Listener (Backup)
-      // If any key is pressed and we aren't focused, focus immediately
-      const handleGlobalKeyDown = (e) => {
-        if (document.activeElement !== loginButtonRef.current) {
-          loginButtonRef.current?.focus();
-        }
-      };
-
-      window.addEventListener('keydown', handleGlobalKeyDown);
-
-      return () => {
-        clearTimeout(initialFocusTimer);
-        clearInterval(focusInterval);
-        window.removeEventListener('keydown', handleGlobalKeyDown);
-      };
-    }
-  }, [token]);
-
   const handleCast = async () => {
     if (window.PresentationRequest) {
       const request = new PresentationRequest(['/']); // Cast the current URL
@@ -154,78 +118,6 @@ function App() {
       });
     }
   }, [setManualToken]);
-
-  // TV Remote Debugging & Input Handling
-  useEffect(() => {
-    const handleDebugKey = (e) => {
-      // Show toast for ANY key press to verify remote signal
-      setToast({ message: `Key: ${e.key} (${e.code})`, type: 'info', duration: 2000 });
-
-      // Xiaomi / Android TV Remote Mappings
-      // Some remotes send specific codes or 'Unidentified'
-      if (e.key === 'Enter' || e.key === 'Select' || e.code === 'Enter' || e.code === 'NumpadEnter') {
-        // Handle Enter/Select
-        if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
-          document.activeElement.click();
-        }
-      }
-    };
-
-    // Force focus to window to ensure we catch events
-    const focusInterval = setInterval(() => {
-      if (navigator.presentation && navigator.presentation.receiver) {
-        window.focus();
-      }
-    }, 1000);
-
-    window.addEventListener('keydown', handleDebugKey);
-    return () => {
-      window.removeEventListener('keydown', handleDebugKey);
-      clearInterval(focusInterval);
-    };
-  }, []);
-
-  // Settings State
-  const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem('floatify_settings');
-    return saved ? JSON.parse(saved) : {
-      themeColor: '#1db954',
-      lyricsSize: '1.5rem',
-      lyricsAlign: 'left',
-      dynamicBackground: false,
-      themeMode: 'dark',
-      hideControls: false,
-      fontFamily: 'Inter',
-      fontStyle: 'normal',
-      glowEnabled: true
-    };
-  });
-
-  // Persist Settings
-  useEffect(() => {
-    localStorage.setItem('floatify_settings', JSON.stringify(settings));
-  }, [settings]);
-
-  // Handle Resize
-  // Handle Resize & TV Detection
-  useEffect(() => {
-    const handleResize = () => {
-      // Force Desktop layout if running as a Cast Receiver
-      if (navigator.presentation && navigator.presentation.receiver) {
-        setIsMobile(false);
-        setIsLandscape(true); // Force landscape for TV
-      } else {
-        setIsMobile(window.innerWidth <= 768);
-        setIsLandscape(window.innerHeight < window.innerWidth);
-      }
-    };
-
-    // Initial check
-    handleResize();
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Fetch Profile
   useEffect(() => {
@@ -851,16 +743,7 @@ function App() {
           <div className="login-container" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1, gap: 'var(--spacing-lg)' }}>
             <h2 style={{ fontSize: '2rem', fontWeight: '800', textAlign: 'center' }}>Music that floats<br />with you.</h2>
             <button
-              ref={loginButtonRef}
               onClick={login}
-              tabIndex="0"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  login();
-                }
-              }}
               className="login-button"
               style={{
                 backgroundColor: 'var(--color-primary)',
@@ -872,21 +755,11 @@ function App() {
                 boxShadow: '0 4px 20px rgba(29, 185, 84, 0.3)',
                 transform: 'scale(1)',
                 transition: 'all 0.2s ease',
-                border: '2px solid transparent', // Prepare for focus border
-                outline: 'none' // Custom focus style
+                border: 'none',
+                outline: 'none'
               }}
               onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
               onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              onFocus={(e) => {
-                e.currentTarget.style.transform = 'scale(1.1)';
-                e.currentTarget.style.boxShadow = '0 0 0 4px rgba(255, 255, 255, 0.5), 0 8px 25px rgba(29, 185, 84, 0.6)';
-                e.currentTarget.style.borderColor = 'white';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 20px rgba(29, 185, 84, 0.3)';
-                e.currentTarget.style.borderColor = 'transparent';
-              }}
             >
               Login with Spotify
             </button>
