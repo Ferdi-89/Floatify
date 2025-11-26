@@ -16,7 +16,7 @@ import { FastAverageColor } from 'fast-average-color';
 const fac = new FastAverageColor();
 
 function App() {
-  const { token, login, logout } = useAuth();
+  const { token, login, logout, setManualToken } = useAuth();
   const { currentTrack, progress, isPlaying } = useSpotifyCurrentTrack(token, logout);
   const { pipWindow, requestPiP, closePiP } = useDocumentPiP();
 
@@ -93,6 +93,17 @@ function App() {
       try {
         const connection = await request.start();
         setToast({ message: "Casting to external display...", type: 'success' });
+
+        // Send token to receiver immediately
+        connection.addEventListener('connect', () => {
+          connection.send(JSON.stringify({ type: 'AUTH_TOKEN', token: token }));
+        });
+
+        // Also send if already connected (race condition)
+        if (connection.state === 'connected') {
+          connection.send(JSON.stringify({ type: 'AUTH_TOKEN', token: token }));
+        }
+
       } catch (error) {
         if (error.name !== 'NotFoundError' && error.name !== 'AbortError') {
           console.error("Cast failed", error);
@@ -103,6 +114,27 @@ function App() {
       setToast({ message: "Casting not supported in this browser.", type: 'error' });
     }
   };
+
+  // Receiver Logic: Listen for Token
+  useEffect(() => {
+    if (navigator.presentation && navigator.presentation.receiver) {
+      navigator.presentation.receiver.connectionList.then(list => {
+        list.connections.forEach(connection => {
+          connection.addEventListener('message', event => {
+            try {
+              const data = JSON.parse(event.data);
+              if (data.type === 'AUTH_TOKEN' && data.token) {
+                // Manually set token to skip login
+                setManualToken({ access_token: data.token, expires_in: 3600 });
+              }
+            } catch (e) {
+              console.error("Error parsing cast message", e);
+            }
+          });
+        });
+      });
+    }
+  }, [setManualToken]);
 
   // Settings State
   const [settings, setSettings] = useState(() => {
