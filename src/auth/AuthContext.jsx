@@ -6,75 +6,30 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
+  const [expiresAt, setExpiresAt] = useState(null);
 
-  useEffect(() => {
-    const args = new URLSearchParams(window.location.search);
-    const code = args.get('code');
-    const storedToken = window.localStorage.getItem("token");
-    const storedRefreshToken = window.localStorage.getItem("refresh_token");
-    const storedExpiresAt = window.localStorage.getItem("expires_at");
-
-    // Check if token is expired
-    const isExpired = storedExpiresAt && Date.now() > parseInt(storedExpiresAt);
-
-    if (storedToken && !isExpired) {
-      setToken(storedToken);
-    } else if (storedRefreshToken) {
-      // Try to refresh token
-      refreshAccessToken(storedRefreshToken);
-    }
-
-    if (code) {
-      const getToken = async () => {
-        const verifier = window.localStorage.getItem("verifier");
-        const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID?.trim();
-        const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI?.trim();
-
-        const payload = {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            client_id: CLIENT_ID,
-            grant_type: 'authorization_code',
-            code,
-            redirect_uri: REDIRECT_URI,
-            code_verifier: verifier,
-          }),
-        };
-
-        try {
-          const body = await fetch("https://accounts.spotify.com/api/token", payload);
-          const response = await body.json();
-
-          if (response.access_token) {
-            handleTokenResponse(response);
-            // Clean URL
-            window.history.replaceState({}, document.title, "/");
-          } else {
-            console.error("Token exchange failed", response);
-          }
-        } catch (e) {
-          console.error("Error fetching token", e);
-        }
-      };
-
-      getToken();
-    }
-  }, []);
-
+  // Define helper functions first to avoid closure issues
   const handleTokenResponse = (response) => {
     const { access_token, refresh_token, expires_in } = response;
-    const expiresAt = Date.now() + expires_in * 1000;
+    const newExpiresAt = Date.now() + expires_in * 1000;
 
     window.localStorage.setItem("token", access_token);
-    window.localStorage.setItem("expires_at", expiresAt);
+    window.localStorage.setItem("expires_at", newExpiresAt);
     if (refresh_token) {
       window.localStorage.setItem("refresh_token", refresh_token);
     }
 
     setToken(access_token);
+    setExpiresAt(newExpiresAt);
+  };
+
+  const logout = () => {
+    setToken(null);
+    setExpiresAt(null);
+    window.localStorage.removeItem("token");
+    window.localStorage.removeItem("verifier");
+    window.localStorage.removeItem("refresh_token");
+    window.localStorage.removeItem("expires_at");
   };
 
   const refreshAccessToken = async (refreshToken) => {
@@ -157,13 +112,89 @@ export const AuthProvider = ({ children }) => {
     document.location = `https://accounts.spotify.com/authorize?${params.toString()}`;
   };
 
-  const logout = () => {
-    setToken(null);
-    window.localStorage.removeItem("token");
-    window.localStorage.removeItem("verifier");
-    window.localStorage.removeItem("refresh_token");
-    window.localStorage.removeItem("expires_at");
-  };
+  // Initial Load Effect
+  useEffect(() => {
+    const args = new URLSearchParams(window.location.search);
+    const code = args.get('code');
+    const storedToken = window.localStorage.getItem("token");
+    const storedRefreshToken = window.localStorage.getItem("refresh_token");
+    const storedExpiresAt = window.localStorage.getItem("expires_at");
+
+    // Check if token is expired
+    const isExpired = storedExpiresAt && Date.now() > parseInt(storedExpiresAt);
+
+    if (storedToken && !isExpired) {
+      setToken(storedToken);
+      if (storedExpiresAt) setExpiresAt(parseInt(storedExpiresAt));
+    } else if (storedRefreshToken) {
+      // Try to refresh token
+      refreshAccessToken(storedRefreshToken);
+    }
+
+    if (code) {
+      const getToken = async () => {
+        const verifier = window.localStorage.getItem("verifier");
+        const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID?.trim();
+        const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI?.trim();
+
+        const payload = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            client_id: CLIENT_ID,
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: REDIRECT_URI,
+            code_verifier: verifier,
+          }),
+        };
+
+        try {
+          const body = await fetch("https://accounts.spotify.com/api/token", payload);
+          const response = await body.json();
+
+          if (response.access_token) {
+            handleTokenResponse(response);
+            // Clean URL
+            window.history.replaceState({}, document.title, "/");
+          } else {
+            console.error("Token exchange failed", response);
+          }
+        } catch (e) {
+          console.error("Error fetching token", e);
+        }
+      };
+
+      getToken();
+    }
+  }, []);
+
+  // Auto-Refresh Effect
+  useEffect(() => {
+    if (!token || !expiresAt) return;
+
+    const timeUntilExpire = expiresAt - Date.now();
+    // Refresh 5 minutes before expiration (300000 ms)
+    // If timeUntilExpire is less than 5 mins, refresh immediately (max(0, ...))
+    // But if it's already expired (negative), we might want to refresh immediately too.
+    // Let's say if it's within 5 mins, we refresh.
+    const REFRESH_BUFFER = 5 * 60 * 1000;
+    const timeUntilRefresh = Math.max(0, timeUntilExpire - REFRESH_BUFFER);
+
+    console.log(`[Auth] Token expires in ${Math.round(timeUntilExpire / 1000)}s. Refresh scheduled in ${Math.round(timeUntilRefresh / 1000)}s`);
+
+    const timeoutId = setTimeout(() => {
+      const refreshToken = window.localStorage.getItem("refresh_token");
+      if (refreshToken) {
+        console.log("[Auth] Auto-refreshing token...");
+        refreshAccessToken(refreshToken);
+      }
+    }, timeUntilRefresh);
+
+    return () => clearTimeout(timeoutId);
+  }, [token, expiresAt]);
 
   return (
     <AuthContext.Provider value={{ token, login, logout }}>
