@@ -6,16 +6,26 @@ const Toast = ({ message, type = 'info', onClose, duration = 4000 }) => {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
+        let enterTimer;
+        let exitTimer;
+        let closeTimer;
+
         // Trigger enter animation
-        requestAnimationFrame(() => setIsVisible(true));
+        enterTimer = requestAnimationFrame(() => setIsVisible(true));
 
         // Auto dismiss
-        const timer = setTimeout(() => {
-            setIsVisible(false);
-            setTimeout(onClose, 300); // Wait for exit animation
-        }, duration);
+        if (duration && duration > 0) {
+            exitTimer = setTimeout(() => {
+                setIsVisible(false);
+                closeTimer = setTimeout(onClose, 300); // Wait for exit animation
+            }, duration);
+        }
 
-        return () => clearTimeout(timer);
+        return () => {
+            cancelAnimationFrame(enterTimer);
+            clearTimeout(exitTimer);
+            clearTimeout(closeTimer);
+        };
     }, [duration, onClose]);
 
     const getIcon = () => {

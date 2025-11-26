@@ -155,14 +155,34 @@ function App() {
     }
   }, [setManualToken]);
 
-  // TV Remote Debugging: Visual Feedback
+  // TV Remote Debugging & Input Handling
   useEffect(() => {
     const handleDebugKey = (e) => {
       // Show toast for ANY key press to verify remote signal
-      setToast({ message: `Remote Key: ${e.key} (${e.code})`, type: 'info' });
+      setToast({ message: `Key: ${e.key} (${e.code})`, type: 'info', duration: 2000 });
+
+      // Xiaomi / Android TV Remote Mappings
+      // Some remotes send specific codes or 'Unidentified'
+      if (e.key === 'Enter' || e.key === 'Select' || e.code === 'Enter' || e.code === 'NumpadEnter') {
+        // Handle Enter/Select
+        if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
+          document.activeElement.click();
+        }
+      }
     };
+
+    // Force focus to window to ensure we catch events
+    const focusInterval = setInterval(() => {
+      if (navigator.presentation && navigator.presentation.receiver) {
+        window.focus();
+      }
+    }, 1000);
+
     window.addEventListener('keydown', handleDebugKey);
-    return () => window.removeEventListener('keydown', handleDebugKey);
+    return () => {
+      window.removeEventListener('keydown', handleDebugKey);
+      clearInterval(focusInterval);
+    };
   }, []);
 
   // Settings State
@@ -187,11 +207,22 @@ function App() {
   }, [settings]);
 
   // Handle Resize
+  // Handle Resize & TV Detection
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-      setIsLandscape(window.innerHeight < window.innerWidth);
+      // Force Desktop layout if running as a Cast Receiver
+      if (navigator.presentation && navigator.presentation.receiver) {
+        setIsMobile(false);
+        setIsLandscape(true); // Force landscape for TV
+      } else {
+        setIsMobile(window.innerWidth <= 768);
+        setIsLandscape(window.innerHeight < window.innerWidth);
+      }
     };
+
+    // Initial check
+    handleResize();
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
