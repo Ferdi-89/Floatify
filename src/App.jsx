@@ -51,14 +51,39 @@ function App() {
     }
   };
 
-  // TV Remote Support: Auto-focus login button
+  // TV Remote Support: Robust Focus Trapping
   const loginButtonRef = useRef(null);
+
   useEffect(() => {
-    if (!token && loginButtonRef.current) {
-      // Small timeout to ensure render is complete
-      setTimeout(() => {
+    if (!token) {
+      // 1. Initial Focus (Longer delay for TV webviews)
+      const initialFocusTimer = setTimeout(() => {
         loginButtonRef.current?.focus();
-      }, 100);
+      }, 500);
+
+      // 2. Focus Trap Interval (Aggressive)
+      // Check periodically if focus is lost and reclaim it
+      const focusInterval = setInterval(() => {
+        if (document.activeElement !== loginButtonRef.current) {
+          loginButtonRef.current?.focus();
+        }
+      }, 2000);
+
+      // 3. Global Key Listener (Backup)
+      // If any key is pressed and we aren't focused, focus immediately
+      const handleGlobalKeyDown = (e) => {
+        if (document.activeElement !== loginButtonRef.current) {
+          loginButtonRef.current?.focus();
+        }
+      };
+
+      window.addEventListener('keydown', handleGlobalKeyDown);
+
+      return () => {
+        clearTimeout(initialFocusTimer);
+        clearInterval(focusInterval);
+        window.removeEventListener('keydown', handleGlobalKeyDown);
+      };
     }
   }, [token]);
 
@@ -736,8 +761,11 @@ function App() {
             <button
               ref={loginButtonRef}
               onClick={login}
+              tabIndex="0"
+              autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
                   login();
                 }
               }}
