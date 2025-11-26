@@ -547,7 +547,7 @@ function App() {
       overflow: 'hidden',
       transition: 'background-color 0.5s ease'
     }}>
-    }}>
+
       {/* Header (Only in Main Window, Non-Mini Mode, Desktop Only) */}
       {!isMini && !pipWindow && !isMobile && (
         <header style={{
