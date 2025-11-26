@@ -223,7 +223,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                             opacity: opacity,
                             filter: `blur(${blur}px)`,
                             transform: `scale(${scale})`,
-                            transformOrigin: lyricsAlign === 'center' ? 'center' : lyricsAlign === 'right' ? 'right center' : 'left center',
+                            transformOrigin: 'center center', // Always center scale to prevent horizontal shift
                             cursor: 'default',
                             textShadow: textShadow,
                             willChange: 'transform, opacity, filter', // Hint for GPU acceleration

@@ -123,7 +123,7 @@ function App() {
               if (data.type === 'AUTH_TOKEN' && data.token) {
                 // Manually set token to skip login
                 setManualToken({ access_token: data.token, expires_in: 3600 });
-                setIsMini(true); // Force Mini Mode on Receiver
+                // setIsMini(true); // Removed to allow Main Window on Cast
                 setToast({ message: "Logged in via Cast!", type: 'success' });
               }
             } catch (e) {
@@ -584,12 +584,32 @@ function App() {
             {token && (
               <>
                 {/* Profile Button */}
-                <button onClick={() => setIsProfileOpen(true)} title="Profile" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                <button
+                  onClick={() => setIsProfileOpen(true)}
+                  title="Profile"
+                  style={{
+                    padding: '4px 12px 4px 4px',
+                    color: 'var(--color-text-primary)',
+                    background: 'var(--color-surface)',
+                    borderRadius: 'var(--border-radius-full)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    border: '1px solid var(--color-border)',
+                    fontSize: '0.875rem',
+                    fontWeight: '600'
+                  }}
+                >
                   {profile?.images?.[0]?.url ? (
-                    <img src={profile.images[0].url} alt="Profile" style={{ width: '20px', height: '20px', borderRadius: '50%' }} />
+                    <img src={profile.images[0].url} alt="Profile" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
                   ) : (
-                    <User size={20} />
+                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--color-surface-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <User size={14} />
+                    </div>
                   )}
+                  <span style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {profile?.display_name || 'User'}
+                  </span>
                 </button>
 
                 <button onClick={handleCast} title="Cast to TV/Screen" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
