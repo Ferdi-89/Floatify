@@ -222,6 +222,29 @@ function SettingsModal({ isOpen, onClose, settings, updateSettings }) {
                     </div>
                 </div>
 
+                {/* Vertical Spacing */}
+                <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                    <label style={{ display: 'block', marginBottom: 'var(--spacing-sm)', color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Vertical Spacing</label>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-xs)', background: 'var(--color-surface)', padding: '4px', borderRadius: 'var(--border-radius-md)' }}>
+                        {['Compact', 'Normal', 'Wide'].map((spacing) => (
+                            <button
+                                key={spacing}
+                                onClick={() => updateSettings('lyricSpacing', spacing.toLowerCase())}
+                                style={{
+                                    flex: 1,
+                                    padding: '8px',
+                                    borderRadius: 'var(--border-radius-sm)',
+                                    backgroundColor: settings.lyricSpacing === spacing.toLowerCase() ? 'var(--color-surface-hover)' : 'transparent',
+                                    color: settings.lyricSpacing === spacing.toLowerCase() ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                                    fontSize: '0.875rem'
+                                }}
+                            >
+                                {spacing}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {/* Font Family */}
                 <div style={{ marginBottom: 'var(--spacing-lg)' }}>
                     <label style={{ display: 'block', marginBottom: 'var(--spacing-sm)', color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>Font Family</label>

@@ -51,12 +51,23 @@ function App() {
     }
   };
 
+  // Cast Sender Logic
   const handleCast = async () => {
     if (window.PresentationRequest) {
-      const request = new PresentationRequest(['/']); // Cast the current URL
+      const request = new PresentationRequest(['/']);
       try {
         const connection = await request.start();
-        setToast({ message: "Casting to external display...", type: 'success' });
+        setToast({ message: "Connected to display!", type: 'success' });
+
+        // Send auth token to receiver immediately
+        if (connection && connection.state === 'connected') {
+          connection.send(JSON.stringify({ type: 'AUTH_TOKEN', token }));
+        }
+
+        connection.onconnect = () => {
+          connection.send(JSON.stringify({ type: 'AUTH_TOKEN', token }));
+        };
+
       } catch (error) {
         if (error.name !== 'NotFoundError' && error.name !== 'AbortError') {
           console.error("Cast failed", error);
@@ -67,6 +78,35 @@ function App() {
       setToast({ message: "Casting not supported in this browser.", type: 'error' });
     }
   };
+
+  // Cast Receiver Logic
+  useEffect(() => {
+    if (navigator.presentation && navigator.presentation.receiver) {
+      navigator.presentation.receiver.connectionList.then(list => {
+        list.connections.map(connection => {
+          connection.addEventListener('message', event => {
+            try {
+              const data = JSON.parse(event.data);
+              if (data.type === 'AUTH_TOKEN' && data.token) {
+                // Manually set token and reload/re-init if needed
+                // We can use the exposed login function or direct localStorage if useAuth doesn't expose a direct setter that takes a string
+                // Assuming login() redirects, which we don't want.
+                // We'll hack it: set localStorage and reload, or better, if useAuth watches localStorage?
+                // Let's assume we need to reload to pick it up or use a context method if available.
+                // For now, let's try setting it and reloading if not logged in.
+                if (!token) {
+                  localStorage.setItem('spotify_access_token', data.token);
+                  window.location.reload();
+                }
+              }
+            } catch (e) {
+              console.error("Error parsing cast message", e);
+            }
+          });
+        });
+      });
+    }
+  }, [token]);
 
   // Settings State
   const [settings, setSettings] = useState(() => {
@@ -80,7 +120,8 @@ function App() {
       hideControls: false,
       fontFamily: 'Inter',
       fontStyle: 'normal',
-      glowEnabled: true
+      glowEnabled: true,
+      lyricSpacing: 'compact'
     };
   });
 
@@ -699,7 +740,7 @@ function App() {
               color: 'var(--color-text-primary)',
               background: settings.themeMode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.6)',
               border: settings.themeMode === 'light' ? '1px solid rgba(0,0,0,0.05)' : '1px solid rgba(255,255,255,0.1)',
-              boxShadow: settings.themeMode === 'light' ? '0 4px 12px rgba(0,0,0,0.1)' : '0 44px 12px rgba(0,0,0,0.3)',
+              boxShadow: settings.themeMode === 'light' ? '0 4px 12px rgba(0,0,0,0.1)' : '0 4px 12px rgba(0,0,0,0.3)',
               transition: 'all 0.2s ease'
             }}
             onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}

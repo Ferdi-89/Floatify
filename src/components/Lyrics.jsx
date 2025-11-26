@@ -43,7 +43,7 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 block: 'center',
             });
         }
-    }, [activeIndex, settings.lyricsSize, settings.fontFamily, settings.lyricsAlign, settings.fontStyle, isMini, isMobile]);
+    }, [activeIndex, settings.lyricsSize, settings.fontFamily, settings.lyricsAlign, settings.fontStyle, settings.lyricSpacing, isMini, isMobile]);
 
     if (!currentTrack) return null;
 
@@ -144,10 +144,10 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 fontWeight: '700',
                 linePaddingTop: '50px',
                 linePaddingBottom: '50px',
-                // Balance padding for center, or use small padding for left/right align
-                linePaddingRight: isCenter ? '10vw' : '10vw',
-                linePaddingLeft: isCenter ? '10vw' : 'var(--spacing-sm)',
-                marginLeft: isCenter ? '0' : '5vw' // Reduced margin to prevent truncation
+                // Use consistent small padding, let Flexbox handle alignment
+                linePaddingRight: 'var(--spacing-md)',
+                linePaddingLeft: 'var(--spacing-md)',
+                marginLeft: isCenter ? '0' : '5vw' // Keep indentation for left alignment
             };
         }
     };
@@ -169,7 +169,10 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
                 WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
                 WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS/Android
-                scrollBehavior: 'smooth'
+                scrollBehavior: 'smooth',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: lyricsAlign === 'center' ? 'center' : lyricsAlign === 'right' ? 'flex-end' : 'flex-start'
             }}
             className="lyrics-container"
         >
@@ -198,13 +201,22 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                     textShadow = settings.themeMode === 'light' ? 'none' : '0 0 10px rgba(255,255,255,0.1)';
                 }
 
+                // Spacing Logic
+                const spacingMode = settings?.lyricSpacing || 'compact';
+                // Reduced scale for tighter spacing as requested
+                const lineHeight = spacingMode === 'compact' ? '1.15' : spacingMode === 'wide' ? '1.6' : '1.35';
+                const marginMultiplier = spacingMode === 'compact' ? 0.3 : spacingMode === 'wide' ? 1.0 : 0.6;
+
+                // Calculate dynamic margin based on spacing mode
+                const marginValue = `calc(${styles.spacing} * ${marginMultiplier})`;
+
                 return (
                     <p
                         key={index}
                         ref={isActive ? activeLineRef : null}
                         style={{
                             fontSize: styles.fontSize,
-                            lineHeight: '1.3',
+                            lineHeight: lineHeight,
                             color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                             fontWeight: fontWeight,
                             fontFamily: settings?.fontFamily === 'Mono' ? '"JetBrains Mono", monospace' :
@@ -214,10 +226,10 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                                             settings?.fontFamily === 'Poppins' ? 'Poppins, sans-serif' :
                                                 settings?.fontFamily || 'inherit',
                             fontStyle: settings?.fontStyle || 'normal',
-                            margin: `${styles.spacing} 0`,
+                            margin: `${marginValue} 0`,
                             paddingTop: styles.linePaddingTop,
                             paddingBottom: styles.linePaddingBottom,
-                            paddingLeft: styles.linePaddingLeft || 'var(--spacing-sm)', // Use dynamic padding
+                            paddingLeft: styles.linePaddingLeft || 'var(--spacing-sm)',
                             paddingRight: styles.linePaddingRight,
                             transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease, filter 0.5s ease, text-shadow 0.3s ease, font-variation-settings 0.3s ease',
                             opacity: opacity,
@@ -227,9 +239,13 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                             cursor: 'default',
                             textShadow: textShadow,
                             willChange: 'transform, opacity, filter', // Hint for GPU acceleration
-                            maxWidth: '100%',
+                            maxWidth: '90%', // Prevent clipping when scaled
+                            width: 'fit-content', // Ensure alignment works with margin auto
+                            textAlign: lyricsAlign, // Ensure text inside wraps correctly
                             overflowWrap: 'break-word',
-                            wordBreak: 'break-word'
+                            wordBreak: 'break-word',
+                            padding: '10px 16px', // Fixed padding for stability
+                            boxSizing: 'border-box'
                         }}
                     >
                         {line.text}

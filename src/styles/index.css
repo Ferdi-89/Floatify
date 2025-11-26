@@ -1,3 +1,7 @@
+* {
+  box-sizing: border-box;
+}
+
 :root {
   --color-primary: #1db954;
   --color-primary-hover: #1ed760;
@@ -9,12 +13,16 @@
   --color-error: #e91429;
 
   --font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  
+
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+  --spacing-4xl: 96px;
+  --spacing-4_5xl: 120px;
 
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
@@ -32,7 +40,8 @@ body {
   background-color: var(--color-background);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
-  overflow: hidden; /* App-like feel */
+  overflow: hidden;
+  /* App-like feel */
 }
 
 #root {
