@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import useLyrics from './useLyrics';
 import { Loader2, Music } from 'lucide-react';
 
-function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
+function Lyrics({ currentTrack, isPlaying, progress, isMini, settings, lyrics = [], synced = false, loading = false, source = null }) {
     const lyricsContainerRef = useRef(null);
     const activeLineRef = useRef(null);
     const prevActiveIndexRef = useRef(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    // Debug log
+    // console.log("Lyrics Render:", { lyricsLength: lyrics?.length, loading, source });
 
     useEffect(() => {
         const handleResize = () => {
@@ -19,22 +21,14 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
     // Default settings if not provided
     const { lyricsSize = '2.25rem', lyricsAlign = 'left' } = settings || {};
 
-    // Fetch real lyrics using the custom hook
-    const { lyrics, synced, loading } = useLyrics(
-        currentTrack?.name,
-        currentTrack?.artists[0]?.name,
-        currentTrack?.album?.name,
-        currentTrack?.duration_ms
-    );
-
     // Convert progress (ms) to seconds for comparison with lyric timestamps
     const currentSeconds = progress / 1000;
 
-    // Find active lyric index
-    const activeIndex = lyrics.findIndex((line, index) => {
+    // Find active lyric index (Safety check)
+    const activeIndex = Array.isArray(lyrics) ? lyrics.findIndex((line, index) => {
         const nextLine = lyrics[index + 1];
         return currentSeconds >= line.time && (!nextLine || currentSeconds < nextLine.time);
-    });
+    }) : -1;
 
     useEffect(() => {
         if (activeLineRef.current && lyricsContainerRef.current) {
@@ -172,7 +166,8 @@ function Lyrics({ currentTrack, isPlaying, progress, isMini, settings }) {
                 scrollBehavior: 'smooth',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: lyricsAlign === 'center' ? 'center' : lyricsAlign === 'right' ? 'flex-end' : 'flex-start'
+                alignItems: lyricsAlign === 'center' ? 'center' : lyricsAlign === 'right' ? 'flex-end' : 'flex-start',
+                position: 'relative'
             }}
             className="lyrics-container"
         >

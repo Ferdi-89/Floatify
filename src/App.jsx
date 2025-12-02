@@ -7,6 +7,7 @@ import SettingsModal from './components/SettingsModal';
 import ProfileModal from './components/ProfileModal';
 import useSpotifyCurrentTrack from './components/useSpotifyCurrentTrack';
 import useDocumentPiP from './components/useDocumentPiP';
+import useLyrics from './components/useLyrics';
 import Toast from './components/Toast';
 import { Settings, ExternalLink, Minimize2, LogOut, Maximize2, User, Music, Cast, Download } from 'lucide-react';
 
@@ -19,6 +20,35 @@ function App() {
   const { token, login, logout } = useAuth();
   const { currentTrack, progress, isPlaying } = useSpotifyCurrentTrack(token, logout);
   const { pipWindow, requestPiP, closePiP } = useDocumentPiP();
+
+  // Settings State (Moved up to be available for useLyrics)
+  const [settings, setSettings] = useState(() => {
+    const saved = localStorage.getItem('floatify_settings');
+    const defaults = {
+      themeColor: '#1db954',
+      lyricsSize: '1.5rem',
+      lyricsAlign: 'left',
+      dynamicBackground: false,
+      themeMode: 'dark',
+      hideControls: false,
+      fontFamily: 'Inter',
+      fontStyle: 'normal',
+      glowEnabled: true,
+      lyricSpacing: 'compact',
+      lyricsSource: 'auto' // Default to auto (hybrid)
+    };
+    return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
+  });
+
+  // Fetch lyrics at App level to share state and source info
+  const { lyrics, synced, loading: lyricsLoading, source: lyricsSource } = useLyrics(
+    currentTrack?.name,
+    currentTrack?.artists?.[0]?.name,
+    currentTrack?.album?.name,
+    currentTrack?.duration_ms,
+    currentTrack?.external_ids?.isrc,
+    settings.lyricsSource // Pass preferred source
+  );
 
   // UI State
   const [isMini, setIsMini] = useState(false);
@@ -89,11 +119,6 @@ function App() {
               const data = JSON.parse(event.data);
               if (data.type === 'AUTH_TOKEN' && data.token) {
                 // Manually set token and reload/re-init if needed
-                // We can use the exposed login function or direct localStorage if useAuth doesn't expose a direct setter that takes a string
-                // Assuming login() redirects, which we don't want.
-                // We'll hack it: set localStorage and reload, or better, if useAuth watches localStorage?
-                // Let's assume we need to reload to pick it up or use a context method if available.
-                // For now, let's try setting it and reloading if not logged in.
                 if (!token) {
                   localStorage.setItem('spotify_access_token', data.token);
                   window.location.reload();
@@ -107,23 +132,6 @@ function App() {
       });
     }
   }, [token]);
-
-  // Settings State
-  const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem('floatify_settings');
-    return saved ? JSON.parse(saved) : {
-      themeColor: '#1db954',
-      lyricsSize: '1.5rem',
-      lyricsAlign: 'left',
-      dynamicBackground: false,
-      themeMode: 'dark',
-      hideControls: false,
-      fontFamily: 'Inter',
-      fontStyle: 'normal',
-      glowEnabled: true,
-      lyricSpacing: 'compact'
-    };
-  });
 
   // Persist Settings
   useEffect(() => {
@@ -368,6 +376,10 @@ function App() {
                 progress={progress}
                 isMini={true}
                 settings={settings}
+                lyrics={lyrics}
+                synced={synced}
+                loading={lyricsLoading}
+                source={lyricsSource}
               />
             </div>
 
@@ -465,15 +477,20 @@ function App() {
                   width: '60%',
                   height: '100%',
                   position: 'relative',
-                  overflow: 'hidden'
                 }}>
-                  <Lyrics
-                    currentTrack={currentTrack}
-                    isPlaying={isPlaying}
-                    progress={progress}
-                    isMini={false}
-                    settings={settings}
-                  />
+                  <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <Lyrics
+                      currentTrack={currentTrack}
+                      isPlaying={isPlaying}
+                      progress={progress}
+                      isMini={false}
+                      settings={settings}
+                      lyrics={lyrics}
+                      synced={synced}
+                      loading={lyricsLoading}
+                      source={lyricsSource}
+                    />
+                  </div>
                 </div>
               </div>
             ) : (
@@ -492,6 +509,10 @@ function App() {
                     progress={progress}
                     isMini={false}
                     settings={settings}
+                    lyrics={lyrics}
+                    synced={synced}
+                    loading={lyricsLoading}
+                    source={lyricsSource}
                   />
                 </div>
 
@@ -530,6 +551,10 @@ function App() {
                   progress={progress}
                   isMini={false}
                   settings={settings}
+                  lyrics={lyrics}
+                  synced={synced}
+                  loading={lyricsLoading}
+                  source={lyricsSource}
                 />
               </div>
 
@@ -582,6 +607,22 @@ function App() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--color-primary)' }}></div>
             <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.5px' }}>Floatify</h1>
+            {lyricsSource && (
+              <div style={{
+                padding: '4px 10px',
+                borderRadius: 'var(--border-radius-full)',
+                background: lyricsSource === 'musixmatch' ? 'rgba(255, 107, 0, 0.15)' : 'rgba(29, 185, 84, 0.15)',
+                border: `1px solid ${lyricsSource === 'musixmatch' ? 'rgba(255, 107, 0, 0.3)' : 'rgba(29, 185, 84, 0.3)'}`,
+                fontSize: '0.65rem',
+                fontWeight: '700',
+                color: lyricsSource === 'musixmatch' ? '#ff6b00' : '#1db954',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                marginLeft: '8px'
+              }}>
+                {lyricsSource === 'musixmatch' ? 'Musixmatch' : 'LRCLib'}
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
