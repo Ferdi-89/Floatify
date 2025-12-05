@@ -12,7 +12,7 @@ import Toast from './components/Toast';
 import SearchModal from './components/SearchModal';
 import PlaylistModal from './components/PlaylistModal';
 import QueueModal from './components/QueueModal';
-import { Settings, ExternalLink, Minimize2, LogOut, Maximize2, User, Music, Cast, Download, Search, ListMusic, List } from 'lucide-react';
+import { Settings, ExternalLink, Minimize2, LogOut, Maximize2, User, Music, Cast, Download, Search, ListMusic, List, Sun, Moon } from 'lucide-react';
 
 
 import { FastAverageColor } from 'fast-average-color';
@@ -725,6 +725,14 @@ function App() {
 
                 <button onClick={() => setIsMini(true)} title="Mini Mode" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   <Minimize2 size={20} />
+                </button>
+
+                <button
+                  onClick={() => updateSettings('themeMode', settings.themeMode === 'light' ? 'dark' : 'light')}
+                  title={settings.themeMode === 'light' ? "Switch to Dark Mode" : "Switch to Light Mode"}
+                  style={{ padding: '8px', color: 'var(--color-text-secondary)' }}
+                >
+                  {settings.themeMode === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                 </button>
 
                 <div style={{ width: '1px', height: '24px', background: 'var(--color-border)', margin: '0 var(--spacing-xs)' }}></div>
