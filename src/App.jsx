@@ -9,7 +9,10 @@ import useSpotifyCurrentTrack from './components/useSpotifyCurrentTrack';
 import useDocumentPiP from './components/useDocumentPiP';
 import useLyrics from './components/useLyrics';
 import Toast from './components/Toast';
-import { Settings, ExternalLink, Minimize2, LogOut, Maximize2, User, Music, Cast, Download } from 'lucide-react';
+import SearchModal from './components/SearchModal';
+import PlaylistModal from './components/PlaylistModal';
+import QueueModal from './components/QueueModal';
+import { Settings, ExternalLink, Minimize2, LogOut, Maximize2, User, Music, Cast, Download, Search, ListMusic, List } from 'lucide-react';
 
 
 import { FastAverageColor } from 'fast-average-color';
@@ -57,6 +60,11 @@ function App() {
   const [toast, setToast] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
+  const [playlistMode, setPlaylistMode] = useState('play'); // 'play' or 'add'
+  const [trackToAdd, setTrackToAdd] = useState(null);
   const [profile, setProfile] = useState(null);
   const [bgColor, setBgColor] = useState('#09090b');
 
@@ -252,6 +260,50 @@ function App() {
     } catch (error) {
       console.error("Error controlling playback:", error);
     }
+  };
+
+  const handlePlayTrack = async (uri, isContext = false) => {
+    if (!token) return;
+    try {
+      const body = isContext ? { context_uri: uri } : { uris: [uri] };
+      await fetch('https://api.spotify.com/v1/me/player/play', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+    } catch (error) {
+      console.error("Error playing track:", error);
+      setToast({ message: "Failed to play track", type: 'error' });
+    }
+  };
+
+  const handleAddToQueue = async (uri) => {
+    if (!token) return;
+    try {
+      await fetch(`https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(uri)}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setToast({ message: "Added to queue", type: 'success' });
+    } catch (error) {
+      console.error("Error adding to queue:", error);
+      setToast({ message: "Failed to add to queue", type: 'error' });
+    }
+  };
+
+  const openAddToPlaylist = (uri) => {
+    setTrackToAdd(uri);
+    setPlaylistMode('add');
+    setIsPlaylistOpen(true);
+  };
+
+  const openPlaylist = () => {
+    setPlaylistMode('play');
+    setTrackToAdd(null);
+    setIsPlaylistOpen(true);
   };
 
   const togglePiP = () => {
@@ -647,6 +699,18 @@ function App() {
                   </button>
                 )}
 
+                <button onClick={() => setIsSearchOpen(true)} title="Search Songs" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                  <Search size={20} />
+                </button>
+
+                <button onClick={() => setIsQueueOpen(true)} title="Queue" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                  <List size={20} />
+                </button>
+
+                <button onClick={openPlaylist} title="Your Playlists" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
+                  <ListMusic size={20} />
+                </button>
+
                 <button onClick={() => setIsSettingsOpen(true)} title="Settings" style={{ padding: '8px', color: 'var(--color-text-secondary)' }}>
                   <Settings size={20} />
                 </button>
@@ -911,6 +975,34 @@ function App() {
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
         profile={profile}
+        logout={logout}
+      />
+
+      {/* Search Modal */}
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        token={token}
+        onPlay={handlePlayTrack}
+        onAddToQueue={handleAddToQueue}
+        onAddToPlaylist={openAddToPlaylist}
+      />
+
+      {/* Playlist Modal */}
+      <PlaylistModal
+        isOpen={isPlaylistOpen}
+        onClose={() => setIsPlaylistOpen(false)}
+        token={token}
+        onPlay={handlePlayTrack}
+        mode={playlistMode}
+        trackUri={trackToAdd}
+      />
+
+      {/* Queue Modal */}
+      <QueueModal
+        isOpen={isQueueOpen}
+        onClose={() => setIsQueueOpen(false)}
+        token={token}
       />
     </div>
   );
