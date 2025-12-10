@@ -211,26 +211,35 @@ function App() {
   // Apply Background & Theme Variables
   useEffect(() => {
     const isLight = settings.themeMode === 'light';
-    document.documentElement.style.setProperty('--color-background', bgColor);
 
-    if (isLight) {
-      document.documentElement.style.setProperty('--color-surface', `color-mix(in srgb, ${bgColor}, black 5%)`);
-      document.documentElement.style.setProperty('--color-surface-hover', `color-mix(in srgb, ${bgColor}, black 10%)`);
-      document.documentElement.style.setProperty('--color-text-primary', '#000000');
-      document.documentElement.style.setProperty('--color-text-secondary', '#52525b');
-      document.documentElement.style.setProperty('--color-text-muted', '#71717a');
-      document.documentElement.style.setProperty('--glass-background', 'rgba(255, 255, 255, 0.8)');
-      document.documentElement.style.setProperty('--glass-border', 'rgba(0, 0, 0, 0.1)');
-    } else {
-      document.documentElement.style.setProperty('--color-surface', `color-mix(in srgb, ${bgColor}, white 5%)`);
-      document.documentElement.style.setProperty('--color-surface-hover', `color-mix(in srgb, ${bgColor}, white 10%)`);
-      document.documentElement.style.setProperty('--color-text-primary', '#ffffff');
-      document.documentElement.style.setProperty('--color-text-secondary', '#a1a1aa');
-      document.documentElement.style.setProperty('--color-text-muted', '#71717a');
-      document.documentElement.style.setProperty('--glass-background', 'rgba(24, 24, 27, 0.95)');
-      document.documentElement.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.08)');
+    const applyTheme = (target) => {
+      if (!target) return;
+      target.style.setProperty('--color-background', bgColor);
+
+      if (isLight) {
+        target.style.setProperty('--color-surface', `color-mix(in srgb, ${bgColor}, black 5%)`);
+        target.style.setProperty('--color-surface-hover', `color-mix(in srgb, ${bgColor}, black 10%)`);
+        target.style.setProperty('--color-text-primary', '#000000');
+        target.style.setProperty('--color-text-secondary', '#52525b');
+        target.style.setProperty('--color-text-muted', '#71717a');
+        target.style.setProperty('--glass-background', 'rgba(255, 255, 255, 0.8)');
+        target.style.setProperty('--glass-border', 'rgba(0, 0, 0, 0.1)');
+      } else {
+        target.style.setProperty('--color-surface', `color-mix(in srgb, ${bgColor}, white 5%)`);
+        target.style.setProperty('--color-surface-hover', `color-mix(in srgb, ${bgColor}, white 10%)`);
+        target.style.setProperty('--color-text-primary', '#ffffff');
+        target.style.setProperty('--color-text-secondary', '#a1a1aa');
+        target.style.setProperty('--color-text-muted', '#71717a');
+        target.style.setProperty('--glass-background', 'rgba(24, 24, 27, 0.95)');
+        target.style.setProperty('--glass-border', 'rgba(255, 255, 255, 0.08)');
+      }
+    };
+
+    applyTheme(document.documentElement);
+    if (pipWindow) {
+      applyTheme(pipWindow.document.documentElement);
     }
-  }, [bgColor, settings.themeMode]);
+  }, [bgColor, settings.themeMode, pipWindow]);
 
   const updateSettings = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
