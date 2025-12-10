@@ -314,6 +314,13 @@ function App() {
     }
   };
 
+  // Auto-minimize when PiP is active
+  useEffect(() => {
+    if (pipWindow) {
+      setIsMini(true);
+    }
+  }, [pipWindow]);
+
   // Content for both Main Window and PiP Window
   const PlayerContent = (
     <main style={{
