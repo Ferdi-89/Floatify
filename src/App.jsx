@@ -323,10 +323,15 @@ function App() {
     }
   };
 
-  // Auto-minimize when PiP is active
+  const [prePiPMode, setPrePiPMode] = useState(false);
+
+  // Auto-minimize when PiP is active, restore when closed
   useEffect(() => {
     if (pipWindow) {
-      setIsMini(true);
+      setPrePiPMode(isMini); // Save current state
+      setIsMini(true);       // Force mini mode
+    } else {
+      setIsMini(prePiPMode); // Restore previous state
     }
   }, [pipWindow]);
 
